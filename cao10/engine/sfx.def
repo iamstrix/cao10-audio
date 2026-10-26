@@ -1,0 +1,5 @@
+LIBRARY sfx
+EXPORTS
+    sfx_sample_count
+    sfx_generate
+    sfx_write_wav

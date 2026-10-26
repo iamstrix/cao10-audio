@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "checks": 140,
+  "canvas_columns": 480,
+  "latency_runs": 100,
+  "maximum_sound_samples": 220500,
+  "median_event_to_canvas_ms": 80.83794999947713,
+  "p95_event_to_canvas_ms": 89.17120000114664,
+  "headless_latency_below_100ms": true,
+  "actual_audio_playback": "Not assessed; playback API mocked",
+  "visible_window_layout": "Not assessed; window withdrawn",
+  "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]"
+}

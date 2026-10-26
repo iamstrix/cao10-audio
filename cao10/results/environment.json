@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-10-26T23:41:44.334637+08:00",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+  "cpu": {
+    "Name": "AMD Ryzen 9 8940HX with Radeon Graphics        ",
+    "NumberOfCores": 16,
+    "NumberOfLogicalProcessors": 32
+  },
+  "power_scheme": "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)",
+  "power_connection": "Not controlled or verified",
+  "background_apps": "Not controlled",
+  "machines_tested": 1,
+  "c_reference_object_bytes": 3870,
+  "compiler": "gcc.exe (GCC) 15.2.0",
+  "nasm": "NASM version 2.16.03 compiled on Apr 17 2024",
+  "sha256": {
+    "engine\\sfx.asm": "51a44db619e4060652c145393b1de95882958936870ee7639490b318e59b673c",
+    "engine\\sfx.def": "07a089e955abea1f9b6098010d3ad80636415a4bf8bfc364e1d7f7ee59ee938c",
+    "engine\\sine_table.inc": "bd3e894d95ffb814fca7c300503376829fcc9687c5f0afb748ef2ca2654d9148",
+    "ref\\sfx.h": "de67a2b08204e44fbb666e6bd1df04f3c41d2ae1a2a5c5526e46f734a5cf8440",
+    "ref\\sfx_ref.c": "16b2f3c0160a8aebe588bf18b3839a0948fae4460812b237360b97209173e371",
+    "ref\\sine_table.h": "29c9857c0f528c1078985d6092ce4273af569baed6070432c9681e3f34937c6d",
+    "build\\sfx.dll": "122e03ffe5108b2006a8240d8ae8130c669ecea266b299392c71cafd99eacbea"
+  },
+  "cpu_metadata_source": "cpu.json snapshot taken after benchmark on the same machine"
+}

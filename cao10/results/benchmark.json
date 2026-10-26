@@ -1,0 +1,14 @@
+[
+{"implementation":"Assembly","waveform":0,"median_ms":0.351600,"p95_ms":0.392900},
+{"implementation":"Assembly","waveform":1,"median_ms":1.577000,"p95_ms":1.842500},
+{"implementation":"Assembly","waveform":2,"median_ms":1.677550,"p95_ms":1.930300},
+{"implementation":"Assembly","waveform":3,"median_ms":0.328600,"p95_ms":0.507800},
+{"implementation":"C O2","waveform":0,"median_ms":0.307850,"p95_ms":0.500800},
+{"implementation":"C O2","waveform":1,"median_ms":0.316350,"p95_ms":0.502300},
+{"implementation":"C O2","waveform":2,"median_ms":0.398000,"p95_ms":0.614500},
+{"implementation":"C O2","waveform":3,"median_ms":0.262300,"p95_ms":0.473000},
+{"implementation":"C O0","waveform":0,"median_ms":0.935850,"p95_ms":1.205800},
+{"implementation":"C O0","waveform":1,"median_ms":1.710550,"p95_ms":1.862800},
+{"implementation":"C O0","waveform":2,"median_ms":2.053450,"p95_ms":2.429600},
+{"implementation":"C O0","waveform":3,"median_ms":0.959500,"p95_ms":1.318100}
+]

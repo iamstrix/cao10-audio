@@ -1,0 +1,109 @@
+
+build/sfx.dll:     file format pei-x86-64
+
+Characteristics 0x222e
+	executable
+	line numbers stripped
+	symbols stripped
+	large address aware
+	debugging information removed
+	DLL
+
+Time/Date		Thu Jan 01 08:00:00 1970
+Magic			020b	(PE32+)
+MajorLinkerVersion	2
+MinorLinkerVersion	45
+SizeOfCode		0000000000000400
+SizeOfInitializedData	0000000000000e00
+SizeOfUninitializedData	0000000000000000
+AddressOfEntryPoint	0000000000000000
+BaseOfCode		0000000000001000
+ImageBase		0000000216f90000
+SectionAlignment	00001000
+FileAlignment		00000200
+MajorOSystemVersion	4
+MinorOSystemVersion	0
+MajorImageVersion	0
+MinorImageVersion	0
+MajorSubsystemVersion	5
+MinorSubsystemVersion	2
+Win32Version		00000000
+SizeOfImage		00007000
+SizeOfHeaders		00000400
+CheckSum		00004eaf
+Subsystem		00000003	(Windows CUI)
+DllCharacteristics	00000160
+					HIGH_ENTROPY_VA
+					DYNAMIC_BASE
+					NX_COMPAT
+SizeOfStackReserve	0000000000200000
+SizeOfStackCommit	0000000000001000
+SizeOfHeapReserve	0000000000100000
+SizeOfHeapCommit	0000000000001000
+LoaderFlags		00000000
+NumberOfRvaAndSizes	00000010
+
+The Data Directory
+Entry 0 0000000000005000 0000007a Export Directory [.edata (or where ever we found it)]
+Entry 1 0000000000006000 00000018 Import Directory [parts of .idata]
+Entry 2 0000000000000000 00000000 Resource Directory [.rsrc]
+Entry 3 0000000000003000 0000000c Exception Directory [.pdata]
+Entry 4 0000000000000000 00000000 Security Directory
+Entry 5 0000000000000000 00000000 Base Relocation Directory [.reloc]
+Entry 6 0000000000000000 00000000 Debug Directory
+Entry 7 0000000000000000 00000000 Description Directory
+Entry 8 0000000000000000 00000000 Special Directory
+Entry 9 0000000000000000 00000000 Thread Storage Directory [.tls]
+Entry a 0000000000000000 00000000 Load Configuration Directory
+Entry b 0000000000000000 00000000 Bound Import Directory
+Entry c 0000000000000000 00000000 Import Address Table Directory
+Entry d 0000000000000000 00000000 Delay Import Directory
+Entry e 0000000000000000 00000000 CLR Runtime Header
+Entry f 0000000000000000 00000000 Reserved
+
+There is an import table in .idata at 0x16f96000
+
+The Import Tables (interpreted .idata section contents)
+ vma:            Hint    Time      Forward  DLL       First
+                 Table   Stamp     Chain    Name      Thunk
+ 00006000	00000000 00000000 00000000 00000000 00000000
+
+There is an export table in .edata at 0x16f95000
+
+The Export Tables (interpreted .edata section contents)
+
+Export Flags 			0
+Time/Date stamp 		0
+Major/Minor 			0/0
+Name 				0000000000005046 sfx.dll
+Ordinal Base 			1
+Number in:
+	Export Address Table 		00000003
+	[Name Pointer/Ordinal] Table	00000003
+Table Addresses
+	Export Address Table 		0000000000005028
+	Name Pointer Table 		0000000000005034
+	Ordinal Table 			0000000000005040
+
+Export Address Table -- Ordinal Base 1
+	          Ordinal  Address  Type
+	[   0] +base[   1] 0000109c Export RVA
+	[   1] +base[   2] 00001000 Export RVA
+	[   2] +base[   3] 0000134f Export RVA
+
+[Ordinal/Name Pointer] Table -- Ordinal Base 1
+	          Ordinal   Hint Name
+	[   0] +base[   1]  0000 sfx_generate
+	[   1] +base[   2]  0001 sfx_sample_count
+	[   2] +base[   3]  0002 sfx_write_wav
+
+The Function Table (interpreted .pdata section contents)
+vma:			BeginAddress	 EndAddress	  UnwindData
+ 0000000216f93000:	0000000216f9109c 0000000216f91323 0000000216f94000
+
+Dump of .xdata
+ 0000000216f94000 (rva: 00004000): 0000000216f9109c - 0000000216f91323
+	Version: 1, Flags: none
+	Nbr codes: 2, Prologue size: 0x07, Frame offset: 0x0, Frame reg: none
+	  pc+0x07: alloc large area: rsp = rsp - 0x98
+

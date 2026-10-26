@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CA010 SFX Generator - Requirements</title>
+</head>
+<body>
+
+<header>
+<h1>Software Requirements Specification</h1>
+<p><strong>Procedural Game Sound Effects (SFX) Generator in x86-64 Assembly with GUI Frontend</strong><br>
+CA010 - Computer Architecture and Organization, College of Computer Studies, Angeles University Foundation</p>
+
+<table border="1">
+<tr><th align="left">Document version</th><td>0.2 (draft for group review; proposal updated to match)</td></tr>
+<tr><th align="left">Date</th><td>26 October 2026</td></tr>
+<tr><th align="left">Project phase</th><td>Start of Week 4 (proposal accepted; moving to execution)</td></tr>
+<tr><th align="left">Source document</th><td>CA010 Project Proposal - Procedural Game Sound Effects (SFX) Generator in Assembly.docx</td></tr>
+<tr><th align="left">Proponents</th><td>Allein Edward Miranda, Jan Emil Stenland, Jose Gian M. Tubera, Ray A. Nicolas</td></tr>
+<tr><th align="left">Status</th><td>Draft. Items marked <strong>DECISION</strong> need group sign-off before Week 4 ends.</td></tr>
+</table>
+</header>
+
+<nav>
+<h2>Contents</h2>
+<ol>
+<li><a href="#purpose">Purpose and how to use this document</a></li>
+<li><a href="#decisions">Decisions to close in Week 4</a></li>
+<li><a href="#gaps">Gaps found in the proposal</a></li>
+<li><a href="#context">System context and constraints</a></li>
+<li><a href="#params">Data specification: parameter structure</a></li>
+<li><a href="#api">Interface specification: exported functions</a></li>
+<li><a href="#algo">Algorithm specification</a></li>
+<li><a href="#wav">WAV output format</a></li>
+<li><a href="#fr-engine">Functional requirements: engine</a></li>
+<li><a href="#fr-gui">Functional requirements: GUI</a></li>
+<li><a href="#presets">Preset definitions</a></li>
+<li><a href="#nfr">Non-functional requirements</a></li>
+<li><a href="#build">Build and toolchain requirements</a></li>
+<li><a href="#test">Verification plan</a></li>
+<li><a href="#bench">Benchmark methodology (FR-14)</a></li>
+<li><a href="#trace">Traceability matrix</a></li>
+<li><a href="#plan">Execution plan from Week 4</a></li>
+<li><a href="#risks">Risks</a></li>
+<li><a href="#scope">Out of scope and stretch goals</a></li>
+<li><a href="#glossary">Glossary</a></li>
+</ol>
+</nav>
+
+<hr>
+
+<section id="purpose">
+<h2>1. Purpose and how to use this document</h2>
+<p>The proposal explains <em>why</em> the project exists and sketches <em>what</em> it does. This document turns that sketch into requirements precise enough to build and test against. Where the proposal leaves a choice open or is internally inconsistent, this document either makes a recommendation (marked <strong>DECISION</strong>) or states a rule (marked <strong>RULE</strong>) so that the engine author, the GUI author and the tester all work from the same contract.</p>
+<p>Requirement IDs FR-01 to FR-14 are kept from proposal section 2.8.1 so the final paper stays traceable. New requirements use these prefixes:</p>
+<table border="1">
+<tr><th>Prefix</th><th>Meaning</th></tr>
+<tr><td>FR</td><td>Functional requirement (from the proposal, refined)</td></tr>
+<tr><td>ER</td><td>Engine requirement added by this document</td></tr>
+<tr><td>GR</td><td>GUI requirement added by this document</td></tr>
+<tr><td>IF</td><td>Interface (ABI and API) requirement</td></tr>
+<tr><td>NFR</td><td>Non-functional requirement</td></tr>
+<tr><td>BR</td><td>Build and toolchain requirement</td></tr>
+<tr><td>TC</td><td>Test case</td></tr>
+</table>
+<p>Keywords: <strong>shall</strong> = mandatory; <strong>should</strong> = expected unless there is a recorded reason not to; <strong>may</strong> = optional. Priority uses MoSCoW: <strong>M</strong>ust, <strong>S</strong>hould, <strong>C</strong>ould, <strong>W</strong>on't (this term).</p>
+</section>
+
+<section id="decisions">
+<h2>2. Decisions to close in Week 4</h2>
+<p>The proposal leaves the GUI language and primary operating system open (section 2.8.4). Nothing in the GUI can start until these are fixed. Recommendations below are chosen to keep the toolchain small and the install footprint at zero extra dependencies.</p>
+<table border="1">
+<tr><th>ID</th><th>Question</th><th>Recommendation</th><th>Reason</th><th>Status</th></tr>
+<tr><td>D-01</td><td>Primary operating system</td><td>Windows 11 x64</td><td>Matches the proposal's working assumption and the group's machines. Linux build is a stretch goal only.</td><td>DECISION</td></tr>
+<tr><td>D-02</td><td>GUI language and toolkit</td><td>Python 3.11+ (64-bit) with Tkinter</td><td>Tkinter ships with Python, <code>ctypes</code> loads the DLL with no glue code, and the Canvas widget is enough for the waveform view. The proposal already uses <code>ctypes</code> as its example.</td><td>DECISION</td></tr>
+<tr><td>D-03</td><td>Audio playback method</td><td><code>winsound.PlaySound</code> with <code>SND_MEMORY</code>, called on a worker thread</td><td>Built into Python on Windows and plays the WAV bytes the engine produces directly. <code>SND_MEMORY</code> cannot be combined with <code>SND_ASYNC</code>, so playback must run off the UI thread to keep the GUI responsive.</td><td>DECISION</td></tr>
+<tr><td>D-04</td><td>Linker for the DLL</td><td>MinGW-w64 <code>gcc -shared</code> (or MSVC <code>link /DLL</code> if the group already has Visual Studio)</td><td>Either works with NASM <code>-f win64</code> objects. Pick one and record it in the build script so every member builds the same way.</td><td>DECISION</td></tr>
+<tr><td>D-05</td><td>High-level baseline for FR-14</td><td>A C reference implementation of the same algorithm (required) plus a pure-Python version (optional)</td><td>C at <code>-O2</code> is the fair comparison against hand-written Assembly. It also doubles as the test oracle for TC-series correctness checks.</td><td>DECISION</td></tr>
+<tr><td>D-06</td><td>Who owns what</td><td>Engine (2 members), GUI (1), C reference + tests + benchmark + paper (1)</td><td>The engine is the largest and most course-relevant piece. Owners are listed in section 17.</td><td>DECISION</td></tr>
+</table>
+</section>
+
+<section id="gaps">
+<h2>3. Gaps found in the proposal</h2>
+<p>These were found while turning the proposal into testable requirements. Each has a resolution that the rest of this document follows.</p>
+<p><strong>Status (26 October 2026):</strong> G-01 to G-10, G-12 and G-13 are now fixed in the proposal itself (sections 2.1.2, 2.1.3, 2.2, 2.6, 2.7, 2.8 and new requirement FR-15), so the proposal and this document agree. G-11 is a known risk and is deliberately left open until the Week 6 listening test.</p>
+<table border="1">
+<tr><th>#</th><th>Issue in the proposal</th><th>Why it matters</th><th>Resolution in this document</th></tr>
+<tr><td>G-01</td><td>The pseudocode computes <code>2 ^ (slide / 44100)</code>, but SSE has no exponent instruction, and the proposal avoids x87 (which has <code>F2XM1</code>).</td><td>The engine cannot implement the pitch slide as written.</td><td>Use a second-order Taylor expansion. The exponent is at most 4/44100 &asymp; 9.1e-5, so the error is far below single-precision resolution. See section 7.2.</td></tr>
+<tr><td>G-02</td><td>Return value 0 means "error", but <code>sfx_generate</code> also returns <code>n</code> when the frequency falls below the minimum, which can be 0 at the first sample.</td><td>The GUI cannot tell a failure from a silent sound.</td><td>RULE: validation requires <code>min_freq &le; base_freq</code>, and the minimum-frequency check is skipped for the first sample, so a valid call always writes at least 1 sample. Return 0 then only ever means error.</td></tr>
+<tr><td>G-03</td><td>Upward pitch slides have no upper bound. At +4 octaves/second for 5 seconds the frequency would reach 440 &times; 2<sup>20</sup> Hz.</td><td>The phase step exceeds 1.0, the single <code>phase -= 1.0</code> wrap fails, and output becomes garbage.</td><td>RULE: clamp the running frequency to 20,000 Hz with <code>MINSS</code> after each slide step. Maximum phase step is then 30,000 / 44,100 &asymp; 0.68 even with full vibrato.</td></tr>
+<tr><td>G-04</td><td>Section 2.1.2 places buffers in <code>.bss</code>; FR-07 and the memory target forbid engine-owned buffers.</td><td>Writable globals also break thread safety and determinism.</td><td>RULE: the engine has <code>.text</code> and <code>.rodata</code> only. No <code>.data</code> or <code>.bss</code> writes. All state lives in registers or on the stack.</td></tr>
+<tr><td>G-05</td><td>Noise seed must be nonzero, but nothing says who enforces it. Xorshift with state 0 outputs 0 forever.</td><td>Noise waveform would produce silence.</td><td>RULE: engine rejects seed 0 (returns 0). GUI never sends 0.</td></tr>
+<tr><td>G-06</td><td><code>sfx_sample_count</code> returns the planned length, but <code>sfx_generate</code> may stop early on the minimum frequency.</td><td>A WAV built from the planned count would contain stale data at the end.</td><td>RULE: callers shall use the return value of <code>sfx_generate</code> as the sample count for <code>sfx_write_wav</code> and for drawing. <code>sfx_sample_count</code> is only for sizing buffers.</td></tr>
+<tr><td>G-07</td><td>The conversion from seconds to samples (round or truncate) is not stated.</td><td><code>sfx_sample_count</code> and <code>sfx_generate</code> could disagree by one sample, and the C reference could disagree with the Assembly.</td><td>RULE: <code>samples = CVTTSS2SI(seconds &times; 44100.0f)</code> (truncate toward zero), computed by one shared internal routine.</td></tr>
+<tr><td>G-08</td><td>Vibrato reads <code>sine_table(...)</code>, but table size, type and indexing are not given.</td><td>The C reference cannot match the Assembly bit-for-bit without them.</td><td>RULE: 256-entry <code>float</code> table in <code>.rodata</code>, indexed by <code>trunc(vib_phase &times; 256) AND 255</code>, with <code>vib_phase</code> kept as its own accumulator. See section 7.3.</td></tr>
+<tr><td>G-09</td><td>How a 32-bit xorshift value becomes a float sample is not stated.</td><td>Same as G-08.</td><td>RULE: treat state as signed 32-bit, <code>CVTSI2SS</code>, multiply by 2<sup>-31</sup>. Range is [-1.0, 1.0).</td></tr>
+<tr><td>G-10</td><td>Windows x64 treats XMM6 to XMM15 and RBX, RBP, RDI, RSI, R12 to R15 as callee-saved. The proposal mentions saving registers but not which ones.</td><td>Clobbering XMM6+ corrupts Python's state and causes crashes that are very hard to trace.</td><td>See IF-03 and IF-04.</td></tr>
+<tr><td>G-11</td><td>Noise changes value once per waveform cycle, and base frequency is capped at 4,000 Hz.</td><td>Noise is always somewhat muffled; bright hiss for "Hit" may be hard to get.</td><td>Accepted for now. Revisit after the Week 6 listening test (risk R-05).</td></tr>
+<tr><td>G-12</td><td>"High-level implementation" for FR-14 is not defined.</td><td>The benchmark result cannot be reproduced or defended.</td><td>See D-05 and section 15.</td></tr>
+<tr><td>G-13</td><td>A leftover "[Insert Figure 2.1 here]" line sits under the figure, which is already in place. The instructor name is blank on the title page.</td><td>Paper completeness.</td><td>Placeholder line removed. The instructor name still needs to be filled in by the group.</td></tr>
+</table>
+</section>
+
+<section id="context">
+<h2>4. System context and constraints</h2>
+<h3>4.1 Layers</h3>
+<table border="1">
+<tr><th>Layer</th><th>Technology</th><th>Responsibility</th><th>Must not</th></tr>
+<tr><td>GUI</td><td>Python + Tkinter (D-02)</td><td>Hold current parameters, validate ranges, call the engine, draw the waveform, play and save audio, run benchmarks</td><td>Compute any audio samples itself</td></tr>
+<tr><td>Binding</td><td>Python <code>ctypes</code> wrapper module</td><td>Mirror the parameter structure, allocate buffers, convert return codes into Python exceptions</td><td>Hold sound state between calls</td></tr>
+<tr><td>Engine</td><td>x86-64 NASM, built as <code>sfx.dll</code></td><td>Synthesize samples and build the WAV image in caller-supplied memory</td><td>Allocate memory, call the C runtime or Windows API, keep global state</td></tr>
+</table>
+
+<h3>4.2 Data flow for one regeneration</h3>
+<ol>
+<li>User changes a control. GUI updates its parameter structure.</li>
+<li>GUI calls <code>sfx_sample_count(&amp;p)</code>. If it returns 0, the parameters are invalid; show the error and stop.</li>
+<li>GUI allocates (or reuses) a sample buffer of at least that many <code>int16</code> values.</li>
+<li>GUI calls <code>sfx_generate(&amp;p, samples, capacity)</code> and keeps the returned count <code>n</code> (G-06).</li>
+<li>GUI calls <code>sfx_write_wav(samples, n, wav, 44 + 2n)</code> and keeps the returned byte count.</li>
+<li>GUI redraws the waveform from <code>samples[0..n-1]</code>. Play and Save use the WAV bytes.</li>
+</ol>
+
+<h3>4.3 Fixed constraints</h3>
+<ul>
+<li>Sample rate 44,100 Hz, mono, signed 16-bit little-endian PCM. Not configurable.</li>
+<li>Maximum sound length 5.0 seconds = 220,500 samples = 441,044 bytes as WAV.</li>
+<li>One sound at a time (monophonic). No mixing, no music sequencing.</li>
+<li>User-mode only. The engine never touches audio hardware; playback goes through the operating system.</li>
+</ul>
+</section>
+
+<section id="params">
+<h2>5. Data specification: parameter structure</h2>
+<p>The structure is 44 bytes: eleven 4-byte fields, no padding, 4-byte alignment. All three definitions below (C, NASM, Python) shall be kept in sync; a test (TC-IF-01) checks the Python size and offsets.</p>
+
+<table border="1">
+<tr><th>Offset</th><th>Field</th><th>Type</th><th>Valid range</th><th>Default</th><th>Enforced by</th></tr>
+<tr><td>0</td><td><code>waveform</code></td><td>uint32</td><td>0 square, 1 sawtooth, 2 triangle, 3 noise</td><td>0</td><td>Engine and GUI</td></tr>
+<tr><td>4</td><td><code>base_freq</code> (Hz)</td><td>float32</td><td>20 to 4,000</td><td>440</td><td>Engine and GUI</td></tr>
+<tr><td>8</td><td><code>slide</code> (octaves/s)</td><td>float32</td><td>-4.0 to 4.0</td><td>0.0</td><td>Engine and GUI</td></tr>
+<tr><td>12</td><td><code>min_freq</code> (Hz)</td><td>float32</td><td>20 to 1,000, and &le; <code>base_freq</code></td><td>20</td><td>Engine and GUI</td></tr>
+<tr><td>16</td><td><code>vib_depth</code> (fraction)</td><td>float32</td><td>0.0 to 0.5</td><td>0.0</td><td>Engine and GUI</td></tr>
+<tr><td>20</td><td><code>vib_rate</code> (Hz)</td><td>float32</td><td>0 to 30</td><td>6</td><td>Engine and GUI</td></tr>
+<tr><td>24</td><td><code>attack</code> (s)</td><td>float32</td><td>0.0 to 2.0</td><td>0.01</td><td>Engine and GUI</td></tr>
+<tr><td>28</td><td><code>sustain</code> (s)</td><td>float32</td><td>0.0 to 2.0</td><td>0.1</td><td>Engine and GUI</td></tr>
+<tr><td>32</td><td><code>decay</code> (s)</td><td>float32</td><td>0.0 to 3.0</td><td>0.3</td><td>Engine and GUI</td></tr>
+<tr><td>36</td><td><code>volume</code></td><td>float32</td><td>0.0 to 1.0</td><td>0.5</td><td>Engine and GUI</td></tr>
+<tr><td>40</td><td><code>seed</code></td><td>uint32</td><td>1 to 4,294,967,295</td><td>1</td><td>Engine and GUI</td></tr>
+</table>
+<p>Additional cross-field rules (engine-enforced, return 0 if broken):</p>
+<ul>
+<li>Total length <code>A + S + D</code> in samples (after truncation, G-07) shall be between 1 and 220,500.</li>
+<li><code>min_freq &le; base_freq</code> (G-02).</li>
+<li>No field may be NaN. With <code>COMISS</code>, a NaN sets the parity flag; check <code>JP</code> as well as the range jumps.</li>
+</ul>
+
+<h3>5.1 C definition (shared by the C reference and the test harness)</h3>
+<pre><code>typedef struct SfxParams {
+    uint32_t waveform;    /*  0 */
+    float    base_freq;   /*  4 */
+    float    slide;       /*  8 */
+    float    min_freq;    /* 12 */
+    float    vib_depth;   /* 16 */
+    float    vib_rate;    /* 20 */
+    float    attack;      /* 24 */
+    float    sustain;     /* 28 */
+    float    decay;       /* 32 */
+    float    volume;      /* 36 */
+    uint32_t seed;        /* 40 */
+} SfxParams;              /* sizeof == 44 */</code></pre>
+
+<h3>5.2 NASM definition</h3>
+<pre><code>struc SfxParams
+    .waveform   resd 1
+    .base_freq  resd 1
+    .slide      resd 1
+    .min_freq   resd 1
+    .vib_depth  resd 1
+    .vib_rate   resd 1
+    .attack     resd 1
+    .sustain    resd 1
+    .decay      resd 1
+    .volume     resd 1
+    .seed       resd 1
+endstruc</code></pre>
+<p>Use the symbolic offsets (for example <code>movss xmm0, [rcx + SfxParams.base_freq]</code>) rather than literal numbers.</p>
+
+<h3>5.3 Python definition</h3>
+<pre><code>class SfxParams(ctypes.Structure):
+    _fields_ = [
+        ("waveform",  ctypes.c_uint32),
+        ("base_freq", ctypes.c_float),
+        ("slide",     ctypes.c_float),
+        ("min_freq",  ctypes.c_float),
+        ("vib_depth", ctypes.c_float),
+        ("vib_rate",  ctypes.c_float),
+        ("attack",    ctypes.c_float),
+        ("sustain",   ctypes.c_float),
+        ("decay",     ctypes.c_float),
+        ("volume",    ctypes.c_float),
+        ("seed",      ctypes.c_uint32),
+    ]</code></pre>
+</section>
+
+<section id="api">
+<h2>6. Interface specification: exported functions</h2>
+<pre><code>uint32_t sfx_sample_count(const SfxParams *params);
+uint32_t sfx_generate(const SfxParams *params, int16_t *out, uint32_t capacity);
+uint32_t sfx_write_wav(const int16_t *samples, uint32_t count, uint8_t *out, uint32_t capacity);</code></pre>
+
+<h3>6.1 Function contracts</h3>
+<table border="1">
+<tr><th>Function</th><th>Inputs (Windows x64 registers)</th><th>Returns in EAX</th><th>Returns 0 when</th><th>Writes</th></tr>
+<tr><td><code>sfx_sample_count</code></td><td>RCX = params</td><td>Planned sample count (upper bound)</td><td>params is NULL or any validation rule in section 5 fails</td><td>Nothing</td></tr>
+<tr><td><code>sfx_generate</code></td><td>RCX = params, RDX = out, R8D = capacity <strong>in samples</strong></td><td>Samples actually written, 1 to planned count</td><td>params or out is NULL, validation fails, or planned count &gt; capacity</td><td><code>out[0 .. return-1]</code> only</td></tr>
+<tr><td><code>sfx_write_wav</code></td><td>RCX = samples, EDX = count, R8 = out, R9D = capacity <strong>in bytes</strong></td><td>Bytes written = 44 + 2 &times; count</td><td>samples or out is NULL, count is 0 or &gt; 220,500, or 44 + 2 &times; count &gt; capacity</td><td><code>out[0 .. return-1]</code> only</td></tr>
+</table>
+
+<h3>6.2 ABI requirements</h3>
+<table border="1">
+<tr><th>ID</th><th>Requirement</th><th>Priority</th></tr>
+<tr><td>IF-01</td><td>All three functions shall follow the Microsoft x64 calling convention and be exported from <code>sfx.dll</code> under their plain, undecorated names.</td><td>M</td></tr>
+<tr><td>IF-02</td><td>Any function that calls another routine shall reserve 32 bytes of shadow space and keep RSP 16-byte aligned at the <code>CALL</code>.</td><td>M</td></tr>
+<tr><td>IF-03</td><td>Functions shall preserve RBX, RBP, RDI, RSI, RSP, R12 to R15 and XMM6 to XMM15. The engine <strong>should</strong> fit in the volatile set (RAX, RCX, RDX, R8 to R11, XMM0 to XMM5) so that no saves are needed.</td><td>M</td></tr>
+<tr><td>IF-04</td><td>If a nonvolatile register must be used, it shall be saved in the prologue and restored on every exit path. Saved XMM registers shall use <code>MOVUPS</code> or a 16-byte-aligned stack slot with <code>MOVAPS</code>. Every exit path shall be covered by TC-IF-03.</td><td>M</td></tr>
+<tr><td>IF-05</td><td>The engine shall not modify MXCSR, and shall assume the default round-to-nearest mode for <code>CVTSS2SI</code>.</td><td>M</td></tr>
+<tr><td>IF-06</td><td>The engine shall be reentrant: no writable global data (G-04). Two threads calling with separate buffers shall not interfere.</td><td>M</td></tr>
+<tr><td>IF-07</td><td><code>sfx_write_wav</code> input and output buffers shall not overlap. Behaviour with overlapping buffers is undefined and documented as such.</td><td>M</td></tr>
+<tr><td>IF-08</td><td>The engine shall not import any DLL (no C runtime, no kernel32). Checked with <code>objdump -p sfx.dll</code> or <code>dumpbin /imports</code>.</td><td>S</td></tr>
+</table>
+</section>
+
+<section id="algo">
+<h2>7. Algorithm specification</h2>
+<p>This refines proposal section 2.7.2. The C reference shall implement exactly these steps in this order using <code>float</code> (not <code>double</code>) so its output can be compared to the Assembly sample by sample.</p>
+
+<h3>7.1 Setup</h3>
+<pre><code>A = trunc(attack  * 44100.0f)
+S = trunc(sustain * 44100.0f)
+D = trunc(decay   * 44100.0f)
+total = A + S + D                         // validated: 1 .. 220500, total &lt;= capacity
+phase = 0.0f
+vib_phase = 0.0f
+vib_step = vib_rate / 44100.0f
+freq = base_freq
+slide_mult = pow2_small(slide / 44100.0f) // section 7.2
+state = seed
+noise = to_float(xorshift32(&amp;state))      // section 7.4</code></pre>
+
+<h3>7.2 Pitch slide without an exponent instruction (G-01)</h3>
+<p>For small <code>x</code>, 2<sup>x</sup> = e<sup>x ln 2</sup> &asymp; 1 + y + y&sup2;/2 where y = x &middot; ln 2. Here |x| &le; 4 / 44100, so the next term (y&sup3;/6) is about 4e-14, well below the float epsilon of 1.2e-7. Three SSE instructions (<code>MULSS</code>, <code>MULSS</code>, <code>ADDSS</code>) plus constants are enough.</p>
+<pre><code>y = x * 0.69314718f
+slide_mult = 1.0f + y + 0.5f * y * y</code></pre>
+
+<h3>7.3 Per-sample loop</h3>
+<pre><code>for n = 0 to total - 1:
+    freq = freq * slide_mult
+    freq = min(freq, 20000.0f)                    // G-03
+    if n &gt; 0 and freq &lt; min_freq: return n      // skipped at n = 0; see note below
+    idx = trunc(vib_phase * 256.0f) AND 255
+    vib = 1.0f + vib_depth * SINE[idx]
+    vib_phase = vib_phase + vib_step
+    if vib_phase &gt;= 1.0f: vib_phase = vib_phase - 1.0f
+
+    phase = phase + freq * vib / 44100.0f
+    if phase &gt;= 1.0f:
+        phase = phase - 1.0f
+        noise = to_float(xorshift32(&amp;state))
+
+    square:   s = (phase &lt; 0.5f) ? 1.0f : -1.0f
+    sawtooth: s = 2.0f * phase - 1.0f
+    triangle: s = 1.0f - 4.0f * abs(phase - 0.5f)    // abs via ANDPS with 0x7FFFFFFF
+    noise:    s = noise
+
+    if n &lt; A:          gain = n / A
+    else if n &lt; A + S: gain = 1.0f
+    else:              gain = 1.0f - (n - A - S) / D
+
+    out[n] = saturate_int16(round(s * gain * volume * 32767.0f))
+return total</code></pre>
+<p><strong>Note on the first sample:</strong> at n = 0 with a negative slide, <code>freq = base_freq &times; slide_mult</code> is slightly below <code>base_freq</code>. If <code>min_freq == base_freq</code> exactly, the loop would return 0. RULE: the minimum-frequency check is skipped for n = 0, so every valid call writes at least one sample.</p>
+<p><strong>Envelope edge cases:</strong> when A = 0 the first branch is never taken, so there is no division by zero. The same holds for D = 0. Division should be done in float (<code>CVTSI2SS</code> then <code>DIVSS</code>), or by multiplying with precomputed <code>1/A</code> and <code>1/D</code> outside the loop, which is faster. Whichever is chosen, the C reference shall do the same.</p>
+<p><strong>Vibrato table:</strong> <code>SINE[i] = sinf(2&pi; &middot; i / 256)</code> for i = 0..255, generated once by a script and pasted into both the NASM <code>.rodata</code> section and the C reference as identical hex literals (<code>dd 0x...</code>) so both use bit-identical values.</p>
+
+<h3>7.4 Noise generator</h3>
+<pre><code>xorshift32(state):          // Marsaglia 13/17/5
+    x = *state
+    x ^= x &lt;&lt; 13
+    x ^= x &gt;&gt; 17             // logical shift (SHR)
+    x ^= x &lt;&lt; 5
+    *state = x
+    return x
+
+to_float(x) = (float)(int32_t)x * 4.656612873e-10f    // 2^-31, range [-1, 1)</code></pre>
+<p>The seed is copied into a register; the parameter structure is never written (it is <code>const</code>).</p>
+
+<h3>7.5 Quantizer</h3>
+<p>The maximum product is 1.0 &times; 1.0 &times; 1.0 &times; 32767 = 32767, so saturation should never trigger with valid inputs, but it is kept as a safety net. <code>CVTSS2SI</code> rounds to nearest under the default MXCSR. Saturation can use <code>PACKSSDW</code> as the proposal states, or a compare-and-clamp; either is acceptable if TC-E-09 passes.</p>
+</section>
+
+<section id="wav">
+<h2>8. WAV output format</h2>
+<p>All multi-byte fields are little-endian. Only <code>RIFF size</code> and <code>data size</code> change between calls; the rest may be copied from a 44-byte template in <code>.rodata</code> with <code>REP MOVSB</code> and then patched.</p>
+<table border="1">
+<tr><th>Offset</th><th>Size</th><th>Field</th><th>Value</th></tr>
+<tr><td>0</td><td>4</td><td>Chunk ID</td><td>"RIFF"</td></tr>
+<tr><td>4</td><td>4</td><td>Chunk size</td><td>36 + 2 &times; count</td></tr>
+<tr><td>8</td><td>4</td><td>Format</td><td>"WAVE"</td></tr>
+<tr><td>12</td><td>4</td><td>Subchunk ID</td><td>"fmt " (note the trailing space)</td></tr>
+<tr><td>16</td><td>4</td><td>Subchunk size</td><td>16</td></tr>
+<tr><td>20</td><td>2</td><td>Audio format</td><td>1 (PCM)</td></tr>
+<tr><td>22</td><td>2</td><td>Channels</td><td>1</td></tr>
+<tr><td>24</td><td>4</td><td>Sample rate</td><td>44100</td></tr>
+<tr><td>28</td><td>4</td><td>Byte rate</td><td>88200</td></tr>
+<tr><td>32</td><td>2</td><td>Block align</td><td>2</td></tr>
+<tr><td>34</td><td>2</td><td>Bits per sample</td><td>16</td></tr>
+<tr><td>36</td><td>4</td><td>Subchunk ID</td><td>"data"</td></tr>
+<tr><td>40</td><td>4</td><td>Data size</td><td>2 &times; count</td></tr>
+<tr><td>44</td><td>2 &times; count</td><td>Samples</td><td>int16 PCM</td></tr>
+</table>
+</section>
+
+<section id="fr-engine">
+<h2>9. Functional requirements: engine</h2>
+<table border="1">
+<tr><th>ID</th><th>Requirement</th><th>Acceptance criteria</th><th>Priority</th></tr>
+<tr><td>FR-01</td><td>The engine shall generate square, sawtooth, triangle and white noise waveforms.</td><td>Each waveform matches the C reference within &plusmn;1 LSB per sample for the 20 parameter sets in TC-E-01. Square and sawtooth at 441 Hz show 441 cycles in 1 s, each period 100 &plusmn;1 samples.</td><td>M</td></tr>
+<tr><td>FR-02</td><td>Output shall be mono, signed 16-bit PCM at 44,100 Hz.</td><td>Audacity reports 44100 Hz, mono, 16-bit for the exported file.</td><td>M</td></tr>
+<tr><td>FR-03</td><td>The engine shall apply a pitch slide in octaves per second and end the sound early when the frequency drops below <code>min_freq</code>.</td><td>With slide = +1.0 from 440 Hz, the measured period after exactly 1 s corresponds to 880 Hz &plusmn;1%. With slide = -4.0 from 1,000 Hz and <code>min_freq</code> = 100 Hz, the return value is within &plusmn;1% of 0.83 s (log<sub>2</sub>(10)/4 &times; 44,100 &asymp; 36,620 samples).</td><td>M</td></tr>
+<tr><td>FR-04</td><td>The engine shall apply vibrato with adjustable depth and rate.</td><td>With depth 0.1 and rate 5 Hz, instantaneous frequency oscillates between 90% and 110% of base with a 0.2 s period (checked against C reference).</td><td>M</td></tr>
+<tr><td>FR-05</td><td>The engine shall apply an attack-sustain-decay envelope.</td><td>Sample <code>A</code> reaches full gain; the last sample's gain is <code>1/D</code> of full; peak amplitude during sustain equals <code>round(volume &times; 32767)</code> for square.</td><td>M</td></tr>
+<tr><td>FR-06</td><td>The engine shall build a 44-byte RIFF/WAVE header followed by the sample data in a caller buffer.</td><td>Header bytes match section 8 exactly (TC-W-01). File opens in Windows Media Player and Audacity with no warnings.</td><td>M</td></tr>
+<tr><td>FR-07</td><td>The engine shall write only to caller buffers and perform no dynamic allocation.</td><td>No imports (IF-08); no writable sections in the DLL; guard bytes after the buffer remain untouched (TC-E-08).</td><td>M</td></tr>
+<tr><td>FR-08</td><td>Identical parameters and seed shall produce identical output.</td><td>1,000 repeated calls produce byte-identical buffers. Different seeds produce different noise.</td><td>M</td></tr>
+<tr><td>ER-01 (FR-15 in the proposal)</td><td>The engine shall validate parameters per section 5 and return 0 on any violation.</td><td>TC-E-05 covers every rule, including NaN and seed 0.</td><td>M</td></tr>
+<tr><td>ER-02</td><td>The engine shall clamp running frequency at 20,000 Hz (G-03).</td><td>Slide = +4.0 for 5 s from 4,000 Hz produces no sample discontinuities larger than a normal waveform step and does not crash.</td><td>M</td></tr>
+<tr><td>ER-03</td><td><code>sfx_sample_count</code> and <code>sfx_generate</code> shall use the same seconds-to-samples conversion (G-07).</td><td>For 1,000 random valid parameter sets with <code>slide &ge; 0</code>, both return the same value.</td><td>M</td></tr>
+<tr><td>ER-04</td><td>The engine shall never write past <code>capacity</code>.</td><td>TC-E-08 passes for capacity = planned &minus; 1, planned, and planned + 1.</td><td>M</td></tr>
+</table>
+</section>
+
+<section id="fr-gui">
+<h2>10. Functional requirements: GUI</h2>
+<table border="1">
+<tr><th>ID</th><th>Requirement</th><th>Acceptance criteria</th><th>Priority</th></tr>
+<tr><td>FR-09</td><td>The GUI shall provide a control for every parameter and regenerate the sound when a value changes.</td><td>11 controls present (waveform selector, 9 sliders, seed field). Each slider's limits equal section 5 ranges. Dragging a slider regenerates with at most 50 ms debounce.</td><td>M</td></tr>
+<tr><td>FR-10</td><td>The GUI shall provide presets for Coin, Laser, Explosion, Jump, Hit, Power-Up and Blip, plus Randomize.</td><td>Each preset button loads the values in section 11 and regenerates. Randomize produces only valid parameter sets (1,000 presses, 0 engine errors).</td><td>M</td></tr>
+<tr><td>FR-11</td><td>The GUI shall display the generated waveform.</td><td>Canvas shows the whole sound, scaled to fit, with min/max per pixel column so peaks are not lost. A zoom toggle showing the first 20 ms is a <em>Should</em>.</td><td>M</td></tr>
+<tr><td>FR-12</td><td>The GUI shall play the sound through the OS audio output.</td><td>Play button plays the current sound; GUI stays responsive during playback (D-03). Auto-play on change is a toggle, default off.</td><td>M</td></tr>
+<tr><td>FR-13</td><td>The GUI shall save the sound as a .wav file.</td><td>Save dialog defaults to <code>&lt;preset&gt;_&lt;seed&gt;.wav</code>; written bytes equal the engine's WAV buffer exactly.</td><td>M</td></tr>
+<tr><td>GR-01</td><td>The GUI shall enforce <code>min_freq &le; base_freq</code> and the 5-second total length.</td><td>Moving one slider adjusts or limits the other; the engine never returns 0 during normal use.</td><td>M</td></tr>
+<tr><td>GR-02</td><td>The GUI shall show the sound length, sample count, and last generation time.</td><td>Status bar shows e.g. "0.41 s, 18,081 samples, generated in 0.38 ms".</td><td>S</td></tr>
+<tr><td>GR-03</td><td>The GUI shall report engine errors without crashing.</td><td>If the DLL is missing or returns 0, a message is shown and the app stays open.</td><td>M</td></tr>
+<tr><td>GR-04</td><td>The GUI should save and load parameter sets as JSON.</td><td>A saved file reloads to identical audio output.</td><td>C</td></tr>
+</table>
+</section>
+
+<section id="presets">
+<h2>11. Preset definitions</h2>
+<p>Starting values, to be tuned by ear in Week 7. Any change shall be recorded here so the final paper and the code agree. Fields not listed use the defaults in section 5. All presets use <code>attack</code> = 0.0 unless stated.</p>
+<table border="1">
+<tr><th>Preset</th><th>Wave</th><th>Base Hz</th><th>Slide</th><th>Min Hz</th><th>Vib depth / rate</th><th>Sustain s</th><th>Decay s</th><th>Volume</th></tr>
+<tr><td>Coin</td><td>Square</td><td>988</td><td>+2.0</td><td>20</td><td>0 / -</td><td>0.05</td><td>0.25</td><td>0.5</td></tr>
+<tr><td>Laser</td><td>Sawtooth</td><td>1,200</td><td>-3.5</td><td>100</td><td>0 / -</td><td>0.05</td><td>0.15</td><td>0.4</td></tr>
+<tr><td>Explosion</td><td>Noise</td><td>2,000</td><td>-1.5</td><td>50</td><td>0 / -</td><td>0.10</td><td>0.80</td><td>0.6</td></tr>
+<tr><td>Jump</td><td>Square</td><td>300</td><td>+2.0</td><td>20</td><td>0 / -</td><td>0.05</td><td>0.20</td><td>0.5</td></tr>
+<tr><td>Hit</td><td>Noise</td><td>3,000</td><td>-3.0</td><td>100</td><td>0 / -</td><td>0.02</td><td>0.15</td><td>0.6</td></tr>
+<tr><td>Power-Up</td><td>Square</td><td>400</td><td>+1.5</td><td>20</td><td>0.10 / 12</td><td>0.20</td><td>0.30</td><td>0.5</td></tr>
+<tr><td>Blip</td><td>Square</td><td>1,500</td><td>0.0</td><td>20</td><td>0 / -</td><td>0.03</td><td>0.05</td><td>0.4</td></tr>
+</table>
+<p><strong>Randomize:</strong> choose each field uniformly within its range, then (1) set <code>min_freq</code> = min(<code>min_freq</code>, <code>base_freq</code>), (2) scale A, S and D down proportionally if their sum exceeds 2.0 s (keeps random sounds short and game-like), (3) pick a random nonzero seed.</p>
+</section>
+
+<section id="nfr">
+<h2>12. Non-functional requirements</h2>
+<table border="1">
+<tr><th>ID</th><th>Requirement</th><th>Measurement</th><th>Priority</th></tr>
+<tr><td>NFR-01 Speed</td><td>Generate 44,100 samples in under 5 ms.</td><td>Median of 1,000 runs in the C benchmark harness (section 15), any waveform, on each member's laptop.</td><td>M</td></tr>
+<tr><td>NFR-02 Size</td><td><code>sfx.dll</code> under 20 KB.</td><td>File size after stripping (<code>-s</code>).</td><td>M</td></tr>
+<tr><td>NFR-03 Memory</td><td>No heap use inside the engine; stack use under 256 bytes per call.</td><td>IF-08 import check; code review of every <code>SUB RSP</code>.</td><td>M</td></tr>
+<tr><td>NFR-04 Responsiveness</td><td>Slider change to redrawn waveform within 100 ms for a 5-second sound.</td><td>Timestamp at slider event and after canvas update; 95th percentile over 100 changes.</td><td>M</td></tr>
+<tr><td>NFR-05 Correctness</td><td>WAV files open without errors in common players and editors.</td><td>Windows Media Player, Audacity, and Python's <code>wave</code> module all read the file.</td><td>M</td></tr>
+<tr><td>NFR-06 Stability</td><td>No crash in a 10-minute session of random slider use and 1,000 Randomize presses.</td><td>Manual soak test plus scripted Randomize loop.</td><td>S</td></tr>
+<tr><td>NFR-07 Readability</td><td>Every Assembly routine has a header comment listing inputs, outputs and clobbered registers; the inner loop has a register allocation table in comments.</td><td>Code review checklist.</td><td>S</td></tr>
+<tr><td>NFR-08 Portability of the GUI</td><td>The GUI runs from a fresh Python install with no <code>pip install</code>.</td><td>Run on a clean machine or virtual environment.</td><td>S</td></tr>
+</table>
+</section>
+
+<section id="build">
+<h2>13. Build and toolchain requirements</h2>
+<table border="1">
+<tr><th>ID</th><th>Requirement</th><th>Priority</th></tr>
+<tr><td>BR-01</td><td>NASM 2.16 or newer, invoked as <code>nasm -f win64 -Wall -o build/sfx.obj engine/sfx.asm</code>.</td><td>M</td></tr>
+<tr><td>BR-02</td><td>DLL linked with the tool chosen in D-04, using <code>-nostdlib</code> (MinGW) or <code>/NODEFAULTLIB /NOENTRY</code> (MSVC), exporting exactly the three functions through a <code>.def</code> file.</td><td>M</td></tr>
+<tr><td>BR-03</td><td>A single build script (<code>build.bat</code>) builds the DLL, the C reference, and the test and benchmark executables, and stops on the first error.</td><td>M</td></tr>
+<tr><td>BR-04</td><td>C reference compiled with <code>-O2 -ffp-contract=off</code> so the compiler does not fuse multiply-adds and change rounding relative to the Assembly.</td><td>M</td></tr>
+<tr><td>BR-05</td><td>All source in one Git repository; <code>main</code> always builds. Each feature is merged through a pull request reviewed by at least one other member.</td><td>S</td></tr>
+</table>
+<p>Suggested layout:</p>
+<pre><code>cao10/
+  engine/      sfx.asm, sfx.def, sine_table.inc
+  ref/         sfx_ref.c, sfx.h
+  tests/       test_engine.c, test_gui_binding.py
+  bench/       bench.c, bench_python.py
+  gui/         app.py, sfx_binding.py, presets.py
+  tools/       gen_sine_table.py
+  build.bat
+  requirements.html</code></pre>
+</section>
+
+<section id="test">
+<h2>14. Verification plan</h2>
+<p>The C test harness links both <code>sfx.dll</code> and the C reference, so every engine test compares the two directly.</p>
+<table border="1">
+<tr><th>ID</th><th>Test</th><th>Pass condition</th><th>Covers</th></tr>
+<tr><td>TC-E-01</td><td>Golden comparison: 20 fixed parameter sets (5 per waveform, including every preset) through Assembly and C reference</td><td>Same return value; every sample within &plusmn;1 LSB (target: bit-identical)</td><td>FR-01, FR-03 to FR-05</td></tr>
+<tr><td>TC-E-02</td><td>Random comparison: 10,000 random valid parameter sets</td><td>As TC-E-01</td><td>FR-01 to FR-05, ER-03</td></tr>
+<tr><td>TC-E-03</td><td>Period check: square and sawtooth at 441 Hz</td><td>441 cycles in 44,100 samples; each period 100 &plusmn;1 samples (float phase rounding)</td><td>FR-01</td></tr>
+<tr><td>TC-E-04</td><td>Slide timing cases from FR-03</td><td>Within &plusmn;1%</td><td>FR-03</td></tr>
+<tr><td>TC-E-05</td><td>Validation: each rule in section 5 broken one at a time, including NaN, seed 0, total 0, total 220,501, <code>min_freq &gt; base_freq</code>, NULL pointers</td><td>Returns 0 and writes nothing (guard pattern intact)</td><td>ER-01</td></tr>
+<tr><td>TC-E-06</td><td>Determinism: 1,000 repeated calls</td><td>Byte-identical output</td><td>FR-08</td></tr>
+<tr><td>TC-E-07</td><td>Extreme upward slide (ER-02)</td><td>No crash; matches C reference</td><td>ER-02</td></tr>
+<tr><td>TC-E-08</td><td>Buffer bounds: buffer surrounded by 64 guard bytes of 0xCD; capacity planned &minus; 1, planned, planned + 1</td><td>Guards untouched; planned &minus; 1 returns 0</td><td>FR-07, ER-04</td></tr>
+<tr><td>TC-E-09</td><td>Full-scale square at volume 1.0</td><td>Peak exactly +32767 and -32767; no wrap to the opposite sign</td><td>FR-02</td></tr>
+<tr><td>TC-W-01</td><td>WAV header bytes for count = 1, 44,100 and 220,500</td><td>Byte-for-byte match with section 8; capacity one byte short returns 0</td><td>FR-06</td></tr>
+<tr><td>TC-W-02</td><td>Read exported WAV with Python <code>wave</code> module and Audacity</td><td>Opens; parameters match FR-02</td><td>FR-06, NFR-05</td></tr>
+<tr><td>TC-IF-01</td><td><code>ctypes.sizeof(SfxParams) == 44</code> and every field offset matches section 5</td><td>All equal</td><td>IF-01</td></tr>
+<tr><td>TC-IF-02</td><td>Export and import check on <code>sfx.dll</code></td><td>Exactly 3 exports, 0 imports</td><td>IF-01, IF-08</td></tr>
+<tr><td>TC-IF-03</td><td>Register preservation: a small NASM test stub fills RBX, RBP, RSI, RDI, R12 to R15 and XMM6 to XMM15 with known values, calls each function on success and on every error path, then compares</td><td>All nonvolatile registers unchanged</td><td>IF-03, IF-04</td></tr>
+<tr><td>TC-G-01</td><td>Manual GUI checklist: every control, every preset, Play, Save, Randomize, error message with DLL renamed</td><td>All items ticked by someone other than the GUI author</td><td>FR-09 to FR-13, GR-01 to GR-03</td></tr>
+<tr><td>TC-G-02</td><td>Listening test: each preset played to the whole group</td><td>Majority agrees it is recognisable as its name</td><td>FR-10</td></tr>
+</table>
+</section>
+
+<section id="bench">
+<h2>15. Benchmark methodology (FR-14)</h2>
+<ol>
+<li>Implementations compared: Assembly DLL; C reference at <code>-O2</code>; C reference at <code>-O0</code> (shows what the compiler adds); optional pure-Python version.</li>
+<li>Workload: 1-second sound (44,100 samples) for each of the 4 waveforms, vibrato on, slide on.</li>
+<li>Timing: <code>QueryPerformanceCounter</code> in the C harness (Python uses <code>time.perf_counter_ns</code>). 100 warm-up runs, then 1,000 measured runs. Report median and 95th percentile.</li>
+<li>Machine notes recorded with each result: CPU model, power plugged in, Windows power mode, other apps closed.</li>
+<li>Also report: DLL size vs C reference object size; number of instructions in the inner loop (from the listing, <code>nasm -l</code>).</li>
+<li>All runs on at least two members' laptops to show the result is not machine-specific.</li>
+<li>Expectation to state honestly in the paper: <code>-O2</code> C may match or beat the Assembly. That outcome is still a valid finding, and the analysis of why (for example, the compiler's register allocation or vectorisation) is part of the deliverable.</li>
+</ol>
+</section>
+
+<section id="trace">
+<h2>16. Traceability matrix</h2>
+<table border="1">
+<tr><th>Specific objective (proposal 1.2.2)</th><th>Requirements</th><th>Tests</th></tr>
+<tr><td>Core waveform generation</td><td>FR-01, FR-02, FR-07, FR-08, ER-01, ER-04, IF-01 to IF-08</td><td>TC-E-01 to TC-E-03, TC-E-05, TC-E-06, TC-E-08, TC-E-09, TC-IF-01 to TC-IF-03</td></tr>
+<tr><td>Frequency and volume control</td><td>FR-03, FR-04, FR-05, ER-02, ER-03</td><td>TC-E-01, TC-E-02, TC-E-04, TC-E-07</td></tr>
+<tr><td>Audio export</td><td>FR-06, FR-13, NFR-05</td><td>TC-W-01, TC-W-02</td></tr>
+<tr><td>GUI frontend integration</td><td>FR-09 to FR-13, GR-01 to GR-04, NFR-04, NFR-06, NFR-08</td><td>TC-G-01, TC-G-02, TC-IF-01</td></tr>
+<tr><td>Performance profiling</td><td>FR-14, NFR-01 to NFR-03</td><td>Section 15 benchmark, TC-IF-02</td></tr>
+</table>
+</section>
+
+<section id="plan">
+<h2>17. Execution plan from Week 4</h2>
+<p>Assumes about seven working weeks remain after Week 3. Shift the week numbers to match the actual submission and defense dates once the instructor confirms them. Owners are left blank for the group to fill in at the Week 4 meeting.</p>
+<table border="1">
+<tr><th>Week</th><th>Milestone</th><th>Deliverables (definition of done)</th><th>Owner</th></tr>
+<tr><td>4</td><td>M1: Grounding</td><td>Decisions D-01 to D-06 signed off; repository and <code>build.bat</code> produce an empty DLL exporting 3 stub functions; Python loads it with <code>ctypes</code>; sine table generator committed; instructor name added to the proposal title page</td><td>&nbsp;</td></tr>
+<tr><td>5</td><td>M2: Engine core</td><td>Validation, sample count, square and sawtooth oscillators, quantizer, WAV writer in Assembly; full C reference; TC-W-01, TC-E-03, TC-E-05, TC-IF-02, TC-IF-03 passing</td><td>&nbsp;</td></tr>
+<tr><td>6</td><td>M3: Engine complete</td><td>Triangle, noise, pitch slide, vibrato, envelope; TC-E-01 to TC-E-09 passing; first listening session (risk R-05)</td><td>&nbsp;</td></tr>
+<tr><td>6 (in parallel)</td><td>M4: GUI shell</td><td>Window with all controls, binding module, waveform canvas, Play and Save working against the Week 5 engine</td><td>&nbsp;</td></tr>
+<tr><td>7</td><td>M5: Integration</td><td>Presets tuned and recorded in section 11; Randomize; GR-01 to GR-03; TC-G-01 and TC-G-02 passing</td><td>&nbsp;</td></tr>
+<tr><td>8</td><td>M6: Measurement</td><td>Benchmark results per section 15 on two machines; NFR-01 to NFR-04 measured and recorded</td><td>&nbsp;</td></tr>
+<tr><td>9</td><td>M7: Optimisation and hardening</td><td>Inner-loop tuning based on Week 8 data (before/after numbers kept); soak test NFR-06; bug fixes only after this point</td><td>&nbsp;</td></tr>
+<tr><td>10</td><td>M8: Final paper and defense</td><td>Results and conclusion chapters; demo script; recorded backup demo video in case of live failure</td><td>&nbsp;</td></tr>
+</table>
+<p>Weekly rule: each member demos what changed at the weekly meeting. Anything not demo-able is not done.</p>
+</section>
+
+<section id="risks">
+<h2>18. Risks</h2>
+<table border="1">
+<tr><th>ID</th><th>Risk</th><th>Likelihood</th><th>Impact</th><th>Mitigation</th></tr>
+<tr><td>R-01</td><td>Calling-convention bug corrupts Python state and crashes far from the cause</td><td>High</td><td>High</td><td>IF-03 (stay in volatile registers); TC-IF-03 written in Week 5 before the engine grows</td></tr>
+<tr><td>R-02</td><td>Assembly and C reference drift apart, so the golden tests stop being trustworthy</td><td>Medium</td><td>High</td><td>Section 7 is the single source of truth; any algorithm change edits section 7 first, then both implementations in the same pull request</td></tr>
+<tr><td>R-03</td><td>32-bit Python installed on a member's machine cannot load a 64-bit DLL</td><td>Medium</td><td>Medium</td><td>Check <code>python -c "import struct; print(struct.calcsize('P')*8)"</code> prints 64 in Week 4</td></tr>
+<tr><td>R-04</td><td>Benchmark shows C <code>-O2</code> is faster than the Assembly</td><td>Medium</td><td>Low</td><td>Planned for in section 15; still a valid, explainable result</td></tr>
+<tr><td>R-05</td><td>Noise presets sound too dull because noise changes once per cycle and base frequency is capped at 4 kHz (G-11)</td><td>Medium</td><td>Low</td><td>Decide after Week 6 listening test: either raise the cap for noise only or update noise twice per cycle; record change here and in section 7</td></tr>
+<tr><td>R-06</td><td>Engine work is concentrated in one member, creating a bus factor of one</td><td>Medium</td><td>High</td><td>Two engine owners (D-06); pull request review is required for every <code>.asm</code> change</td></tr>
+<tr><td>R-07</td><td>Antivirus flags a freshly built unsigned DLL</td><td>Low</td><td>Medium</td><td>Build locally on the demo machine; keep the demo video backup</td></tr>
+</table>
+</section>
+
+<section id="scope">
+<h2>19. Out of scope and stretch goals</h2>
+<h3>Out of scope (from proposal 1.3)</h3>
+<ul>
+<li>Direct hardware audio control, kernel-mode code</li>
+<li>Polyphony, music composition, sequencing</li>
+<li>Reverb, filters, 3D positioning and other post-processing</li>
+<li>Sample rates or bit depths other than 44.1 kHz / 16-bit</li>
+</ul>
+<h3>Stretch goals (only after M6, in this order)</h3>
+<table border="1">
+<tr><th>Goal</th><th>Why it is cheap</th><th>Priority</th></tr>
+<tr><td>Sine waveform (waveform = 4)</td><td>The 256-entry sine table already exists for vibrato; sfxr includes sine</td><td>C</td></tr>
+<tr><td>Square-wave duty cycle parameter</td><td>One extra comparison in the oscillator; needs a 12th structure field, so do it before freezing the struct if wanted</td><td>C</td></tr>
+<tr><td>SIMD inner loop processing 4 samples per iteration</td><td>Strong material for the performance chapter; only possible for waveforms without per-sample branching</td><td>C</td></tr>
+<tr><td>Linux shared library build</td><td>Same source with <code>-f elf64</code> but requires a System V calling convention entry layer</td><td>W</td></tr>
+</table>
+</section>
+
+<section id="glossary">
+<h2>20. Glossary</h2>
+<dl>
+<dt>LSB</dt><dd>Least significant bit; here, a difference of 1 in a 16-bit sample value.</dd>
+<dt>Phase</dt><dd>Position within one waveform cycle, from 0.0 to just under 1.0.</dd>
+<dt>Envelope (ASD)</dt><dd>Volume shape over time: attack (rise), sustain (hold), decay (fall).</dd>
+<dt>Volatile / nonvolatile register</dt><dd>Under Windows x64, a function may freely change volatile registers but must restore nonvolatile ones before returning.</dd>
+<dt>Shadow space</dt><dd>32 bytes the caller reserves on the stack for the callee's first four register arguments.</dd>
+<dt>Golden test</dt><dd>A test that compares output against a trusted reference (here, the C implementation).</dd>
+<dt>Debounce</dt><dd>Waiting briefly after the last slider movement before regenerating, to avoid redundant work.</dd>
+</dl>
+</section>
+
+<hr>
+<footer>
+<p>End of document. Changes to this specification should be made through a pull request and noted in the version field at the top.</p>
+</footer>
+
+</body>
+</html>

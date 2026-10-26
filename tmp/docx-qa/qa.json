@@ -1,0 +1,135 @@
+{
+  "original_pages": 20,
+  "updated_pages": 25,
+  "original_proposal_text_unchanged": true,
+  "original_table_indents_corrected": true,
+  "prior_page_checks": [
+    {
+      "page": 1,
+      "text_unchanged": true,
+      "pixels_unchanged": true
+    },
+    {
+      "page": 2,
+      "text_unchanged": true,
+      "pixels_unchanged": true
+    },
+    {
+      "page": 3,
+      "text_unchanged": true,
+      "pixels_unchanged": true
+    },
+    {
+      "page": 4,
+      "text_unchanged": true,
+      "pixels_unchanged": true
+    },
+    {
+      "page": 5,
+      "text_unchanged": true,
+      "pixels_unchanged": true
+    },
+    {
+      "page": 6,
+      "text_unchanged": true,
+      "pixels_unchanged": true
+    },
+    {
+      "page": 7,
+      "text_unchanged": false,
+      "pixels_unchanged": false
+    },
+    {
+      "page": 8,
+      "text_unchanged": false,
+      "pixels_unchanged": false
+    },
+    {
+      "page": 9,
+      "text_unchanged": true,
+      "pixels_unchanged": true
+    },
+    {
+      "page": 10,
+      "text_unchanged": false,
+      "pixels_unchanged": false
+    },
+    {
+      "page": 11,
+      "text_unchanged": false,
+      "pixels_unchanged": false
+    },
+    {
+      "page": 12,
+      "text_unchanged": false,
+      "pixels_unchanged": false
+    },
+    {
+      "page": 13,
+      "text_unchanged": false,
+      "pixels_unchanged": false
+    },
+    {
+      "page": 14,
+      "text_unchanged": false,
+      "pixels_unchanged": false
+    },
+    {
+      "page": 15,
+      "text_unchanged": false,
+      "pixels_unchanged": false
+    },
+    {
+      "page": 16,
+      "text_unchanged": false,
+      "pixels_unchanged": false
+    },
+    {
+      "page": 17,
+      "text_unchanged": false,
+      "pixels_unchanged": false
+    },
+    {
+      "page": 18,
+      "text_unchanged": false,
+      "pixels_unchanged": false
+    },
+    {
+      "page": 19,
+      "text_unchanged": false,
+      "pixels_unchanged": false
+    },
+    {
+      "page": 20,
+      "text_unchanged": false,
+      "pixels_unchanged": false
+    }
+  ],
+  "pages": [
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-01.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-02.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-03.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-04.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-05.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-06.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-07.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-08.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-09.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-10.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-11.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-12.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-13.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-14.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-15.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-16.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-17.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-18.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-19.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-20.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-21.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-22.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-23.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-24.png",
+    "C:\\dev\\Antigravity\\university\\tmp\\docx-qa\\page0001-25.png"
+  ]
+}

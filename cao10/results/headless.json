@@ -1,0 +1,103 @@
+{
+  "status": "PASS",
+  "checks": 1052,
+  "randomize_runs": 1000,
+  "concurrent_runs": 100,
+  "dll_bytes": 5632,
+  "exports": [
+    "sfx_generate",
+    "sfx_sample_count",
+    "sfx_write_wav"
+  ],
+  "imports": [],
+  "import_directory_bytes": 24,
+  "sections": [
+    {
+      "name": ".text",
+      "rva": 4096,
+      "raw": 1024,
+      "size": 1024,
+      "writable": false
+    },
+    {
+      "name": ".rdata",
+      "rva": 8192,
+      "raw": 2048,
+      "size": 1536,
+      "writable": false
+    },
+    {
+      "name": ".pdata",
+      "rva": 12288,
+      "raw": 3584,
+      "size": 512,
+      "writable": false
+    },
+    {
+      "name": ".xdata",
+      "rva": 16384,
+      "raw": 4096,
+      "size": 512,
+      "writable": false
+    },
+    {
+      "name": ".edata",
+      "rva": 20480,
+      "raw": 4608,
+      "size": 512,
+      "writable": false
+    },
+    {
+      "name": ".idata",
+      "rva": 24576,
+      "raw": 5120,
+      "size": 512,
+      "writable": false
+    }
+  ],
+  "presets": [
+    {
+      "preset": "Coin",
+      "samples": 13230,
+      "duration_s": 0.3,
+      "wav_bytes": 26504
+    },
+    {
+      "preset": "Laser",
+      "samples": 8820,
+      "duration_s": 0.2,
+      "wav_bytes": 17684
+    },
+    {
+      "preset": "Explosion",
+      "samples": 39690,
+      "duration_s": 0.9,
+      "wav_bytes": 79424
+    },
+    {
+      "preset": "Jump",
+      "samples": 11025,
+      "duration_s": 0.25,
+      "wav_bytes": 22094
+    },
+    {
+      "preset": "Hit",
+      "samples": 7497,
+      "duration_s": 0.17,
+      "wav_bytes": 15038
+    },
+    {
+      "preset": "Power-Up",
+      "samples": 22050,
+      "duration_s": 0.5,
+      "wav_bytes": 44144
+    },
+    {
+      "preset": "Blip",
+      "samples": 3528,
+      "duration_s": 0.08,
+      "wav_bytes": 7100
+    }
+  ],
+  "gui_visual_and_playback": "Not assessed by headless tests"
+}
