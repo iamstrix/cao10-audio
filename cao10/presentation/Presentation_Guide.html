@@ -1,0 +1,1242 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SFX Generator Defense Guide</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: study handbook. Sticky section rail on the left (desktop), one readable column of prose;
+   "Say this" scripts are set as oscilloscope-screen cards, the same look as the slide deck. */
+:root {
+  --bg: #f5f7f6;
+  --surface: #ffffff;
+  --ink: #101820;
+  --ink-2: #3d4a55;
+  --muted: #6b7f8e;
+  --rule: #d9e0e3;
+  --teal: #13836c;
+  --mint: #58dbbc;
+  --amber: #b9791c;
+  --screen: #101820;
+  --screen-ink: #e8eef0;
+  --code-bg: #e9efed;
+  --font-display: "Archivo", "Arial Narrow", Arial, sans-serif;
+  --font-body: "Atkinson Hyperlegible", Calibri, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1419; --surface: #141e25; --ink: #e6ecee; --ink-2: #b4c0c7; --muted: #8597a3;
+    --rule: #26343d; --teal: #4cc9a8; --mint: #58dbbc; --amber: #e8a33d;
+    --screen: #071013; --screen-ink: #e8eef0; --code-bg: #1c2a32; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1419; --surface: #141e25; --ink: #e6ecee; --ink-2: #b4c0c7; --muted: #8597a3;
+  --rule: #26343d; --teal: #4cc9a8; --mint: #58dbbc; --amber: #e8a33d;
+  --screen: #071013; --screen-ink: #e8eef0; --code-bg: #1c2a32; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 17px; line-height: 1.6;
+}
+
+.masthead {
+  background: var(--screen); color: var(--screen-ink);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.masthead-inner { max-width: 1180px; margin: 0 auto; padding-block: 40px 28px; display: grid; gap: 10px; }
+.eyebrow { font-family: var(--font-mono); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: #58dbbc; }
+.masthead h1 {
+  font-family: var(--font-display); font-weight: 800; font-size: clamp(30px, 5vw, 48px);
+  line-height: 1.08; margin: 0; text-wrap: balance; letter-spacing: -.01em;
+}
+.masthead p { margin: 0; max-width: 62ch; color: #b4c0c7; }
+.trace { width: 100%; max-width: 520px; height: 34px; margin-top: 8px; }
+.trace path { fill: none; stroke: #58dbbc; stroke-width: 2; stroke-linejoin: round; }
+
+.shell {
+  max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 36px 80px;
+}
+.rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 20px); align-self: start; max-height: calc(100vh - 40px); overflow-y: auto; }
+.rail-title { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+.rail ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.rail a { display: block; padding: 5px 10px; border-radius: 6px; color: var(--ink-2); text-decoration: none; font-size: 15px; line-height: 1.35; }
+.rail a:hover { background: var(--code-bg); color: var(--ink); }
+.rail a.active { color: var(--teal); font-weight: 700; }
+.rail .sub { margin: 2px 0 6px 10px; padding-left: 8px; border-left: 1px solid var(--rule); }
+.rail .sub a { font-size: 14px; padding: 3px 10px; }
+.mobile-toc { display: none; }
+
+main { min-width: 0; max-width: 760px; }
+main h2 {
+  font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 1.15;
+  margin: 64px 0 16px; padding-top: 18px; border-top: 2px solid var(--ink); text-wrap: balance;
+  scroll-margin-top: 16px;
+}
+main h2:first-child { margin-top: 0; }
+main h3 {
+  font-family: var(--font-display); font-weight: 700; font-size: 21px; line-height: 1.25;
+  margin: 40px 0 10px; text-wrap: balance; scroll-margin-top: 16px;
+}
+main p, main li { color: var(--ink); }
+main p { margin: 0 0 14px; }
+main ul, main ol { padding-left: 24px; margin: 0 0 16px; display: grid; gap: 6px; }
+main strong { font-weight: 700; }
+main a { color: var(--teal); }
+:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+
+code {
+  font-family: var(--font-mono); font-size: .86em; background: var(--code-bg);
+  padding: .1em .35em; border-radius: 4px; overflow-wrap: anywhere;
+}
+pre {
+  background: var(--screen); color: var(--screen-ink); padding: 16px 18px; border-radius: 10px;
+  overflow-x: auto; margin: 0 0 18px; font-size: 14px; line-height: 1.55;
+}
+pre code { background: none; padding: 0; font-size: inherit; color: inherit; overflow-wrap: normal; }
+
+.table-wrap { overflow-x: auto; margin: 0 0 20px; border: 1px solid var(--rule); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 15px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--rule); }
+th { font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+
+blockquote {
+  margin: 0 0 18px; padding: 14px 18px; border-left: 3px solid var(--teal);
+  background: var(--surface); border-radius: 0 10px 10px 0;
+}
+blockquote p:last-child, blockquote ol:last-child { margin-bottom: 0; }
+blockquote.say {
+  background: var(--screen); border-left: 0; border-radius: 10px; padding: 18px 20px;
+  background-image: linear-gradient(rgba(88,219,188,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(88,219,188,.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+blockquote.say p, blockquote.say li { color: var(--screen-ink); font-size: 17.5px; }
+blockquote.say em { font-style: normal; color: #58dbbc; font-size: .92em; }
+blockquote.say code { background: rgba(255,255,255,.08); color: var(--screen-ink); }
+.say-label {
+  display: block; font-family: var(--font-mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
+  color: #58dbbc; margin-bottom: 6px;
+}
+
+.footer-note { margin-top: 64px; padding-top: 16px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 14px; }
+
+@media (max-width: 900px) {
+  .shell { grid-template-columns: minmax(0, 1fr); gap: 0; padding-block: 20px 60px; }
+  .rail { display: none; }
+  .mobile-toc { display: block; margin-bottom: 28px; border: 1px solid var(--rule); border-radius: 10px; background: var(--surface); }
+  .mobile-toc summary { cursor: pointer; padding: 12px 14px; font-weight: 700; }
+  .mobile-toc ol { list-style: none; margin: 0; padding: 0 8px 12px; display: grid; gap: 2px; }
+  .mobile-toc a { display: block; padding: 6px 8px; color: var(--ink-2); text-decoration: none; }
+  .mobile-toc .sub { padding-left: 14px; }
+  body { font-size: 16.5px; }
+  main h2 { font-size: 25px; margin-top: 48px; }
+}
+</style>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="eyebrow">CA010 · Procedural SFX Generator · sfx.asm</div>
+    <h1>Assembly Program — Presentation &amp; Defense Guide</h1>
+    <p>What the program does, how the Assembly works, what to say on each slide, and how to answer the hard questions. Written for someone who doesn't know Assembly yet.</p>
+    <svg class="trace" viewBox="0 0 520 34" aria-hidden="true">
+      <path d="M2 28 V6 H32 V28 H62 V6 H92 V28 H122 V6 H130 M130 28 L160 6 V28 L190 6 V28 L220 6 V28 L250 6 M260 28 L275 6 L290 28 L305 6 L320 28 L335 6 L350 28 L365 6 L380 28 M390 17 L396 9 L401 24 L407 12 L412 27 L418 8 L424 21 L429 14 L435 26 L441 7 L447 19 L452 11 L458 25 L464 15 L470 22 L476 9 L482 27 L488 13 L494 20 L500 10 L506 24 L512 16 L518 21"/>
+    </svg>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="rail" aria-label="Sections">
+    <p class="rail-title">Contents</p>
+    <ol><li><a href="#1-the-30-second-summary">1. The 30-second summary</a></li><li><a href="#2-assembly-crash-course-only-what-this-program-uses">2. Assembly crash course</a></li><li><a href="#3-walkthrough-of-the-key-parts">3. Walkthrough of the key parts</a></li><li><a href="#4-slide-by-slide-script">4. Slide-by-slide script</a></li><li><a href="#4b-your-presentation-script-in-plain-english">4b. Your presentation script, in plain English</a><ol class="sub"><li><a href="#slide-1-title">Slide 1</a></li><li><a href="#slide-2-what-the-app-does">Slide 2</a></li><li><a href="#slide-3-three-layers">Slide 3</a></li><li><a href="#slide-4-the-shared-form">Slide 4</a></li><li><a href="#slide-5-three-jobs">Slide 5</a></li><li><a href="#slide-6-the-main-loop">Slide 6</a></li><li><a href="#slide-7-four-wave-shapes">Slide 7</a></li><li><a href="#slide-8-six-problems-we-had-to-solve-ourselves">Slide 8</a></li><li><a href="#slide-9-where-the-data-lives">Slide 9</a></li><li><a href="#slide-10-making-the-audio-file">Slide 10</a></li><li><a href="#slide-11-how-we-know-its-right">Slide 11</a></li><li><a href="#slide-12-speed">Slide 12</a></li><li><a href="#slide-13-what-we-havent-proven-yet">Slide 13</a></li><li><a href="#slide-14-demo-and-questions">Slide 14</a></li><li><a href="#if-they-ask-you-questions">If they ask you questions</a></li></ol></li><li><a href="#5-likely-questions-and-strong-answers">5. Likely questions and strong answers</a></li><li><a href="#6-glossary-and-last-minute-cheat-sheet">6. Glossary and last-minute cheat sheet</a></li></ol>
+  </nav>
+  <main>
+    <details class="mobile-toc">
+      <summary>Jump to a section</summary>
+      <ol><li><a href="#1-the-30-second-summary">1. The 30-second summary</a></li><li><a href="#2-assembly-crash-course-only-what-this-program-uses">2. Assembly crash course</a></li><li><a href="#3-walkthrough-of-the-key-parts">3. Walkthrough of the key parts</a></li><li><a href="#4-slide-by-slide-script">4. Slide-by-slide script</a></li><li><a href="#4b-your-presentation-script-in-plain-english">4b. Your presentation script, in plain English</a><ol class="sub"><li><a href="#slide-1-title">Slide 1</a></li><li><a href="#slide-2-what-the-app-does">Slide 2</a></li><li><a href="#slide-3-three-layers">Slide 3</a></li><li><a href="#slide-4-the-shared-form">Slide 4</a></li><li><a href="#slide-5-three-jobs">Slide 5</a></li><li><a href="#slide-6-the-main-loop">Slide 6</a></li><li><a href="#slide-7-four-wave-shapes">Slide 7</a></li><li><a href="#slide-8-six-problems-we-had-to-solve-ourselves">Slide 8</a></li><li><a href="#slide-9-where-the-data-lives">Slide 9</a></li><li><a href="#slide-10-making-the-audio-file">Slide 10</a></li><li><a href="#slide-11-how-we-know-its-right">Slide 11</a></li><li><a href="#slide-12-speed">Slide 12</a></li><li><a href="#slide-13-what-we-havent-proven-yet">Slide 13</a></li><li><a href="#slide-14-demo-and-questions">Slide 14</a></li><li><a href="#if-they-ask-you-questions">If they ask you questions</a></li></ol></li><li><a href="#5-likely-questions-and-strong-answers">5. Likely questions and strong answers</a></li><li><a href="#6-glossary-and-last-minute-cheat-sheet">6. Glossary and last-minute cheat sheet</a></li></ol>
+    </details>
+    <h2 id="1-the-30-second-summary">1. The 30-second summary</h2>
+<p><strong>Your one-sentence pitch:</strong> "We built a retro game sound-effect generator where every audio sample is computed by hand-written x86-64 Assembly; Python only provides the buttons, the waveform picture and playback."</p>
+<p>The program has three layers. Memorise this picture, because most questions are really about which layer does what.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>File</th>
+<th>Language</th>
+<th>Job</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GUI</td>
+<td><code>gui/app.py</code>, <code>gui/presets.py</code></td>
+<td>Python + Tkinter</td>
+<td>Sliders, presets, Randomize, draws the waveform, plays and saves the sound</td>
+</tr>
+<tr>
+<td>Binding</td>
+<td><code>gui/sfx_binding.py</code></td>
+<td>Python <code>ctypes</code></td>
+<td>Copies the slider values into a 44-byte struct and calls the DLL</td>
+</tr>
+<tr>
+<td>Engine</td>
+<td><code>engine/sfx.asm</code> (313 lines)</td>
+<td>NASM x86-64 Assembly</td>
+<td>Computes the audio samples and builds the WAV file bytes</td>
+</tr>
+<tr>
+<td>Proof</td>
+<td><code>ref/sfx_ref.c</code>, <code>tests/</code>, <code>bench/</code></td>
+<td>C</td>
+<td>A C copy of the same algorithm used to check and time the Assembly</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>What one click does:</strong> you move a slider → Python fills the parameter struct → calls <code>sfx_sample_count</code> (how long will it be?) → allocates a buffer → calls <code>sfx_generate</code> (fill it with samples) → calls <code>sfx_write_wav</code> (wrap them in a WAV header) → draws and plays the result.</p>
+<p><strong>The audio format:</strong> mono, 16-bit signed integers, 44,100 samples per second, at most 5 seconds (220,500 samples, 441,044 bytes as a WAV).</p>
+<p><strong>Headline results you can quote:</strong></p>
+<ul>
+<li>The Assembly output matches the C reference <strong>bit for bit</strong>: 10,000 random sounds + 20 fixed cases, maximum sample difference 0, 1,279,144 checks passed.</li>
+<li>Generating a 1-second sound takes <strong>0.33 to 1.68 ms</strong> in Assembly (median), well under the 5 ms target.</li>
+<li>Optimised C (<code>-O2</code>) is faster (0.26 to 0.40 ms). Assembly beats unoptimised C (<code>-O0</code>) on every waveform. Say this openly; it is a strength to be honest about it.</li>
+<li>The DLL is 5,632 bytes, imports nothing, has no writable memory and uses no heap.</li>
+</ul>
+<h2 id="2-assembly-crash-course-only-what-this-program-uses">2. Assembly crash course (only what this program uses)</h2>
+<p>Assembly is a list of tiny steps the CPU runs one after another. Each line does one thing: move a value, add, compare, or jump. You only need about 25 instructions to read <code>sfx.asm</code>.</p>
+<h3 id="registers-the-cpus-variables">Registers: the CPU's variables</h3>
+<p>Registers are a handful of very fast storage slots inside the CPU. This program uses two kinds.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>Names used</th>
+<th>Holds</th>
+<th>Think of it as</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>General purpose (64-bit)</td>
+<td><code>RAX RCX RDX R8 R9 R10 R11 RSP</code></td>
+<td>Integers, pointers (addresses)</td>
+<td><code>int</code> and pointer variables</td>
+</tr>
+<tr>
+<td>Same, lower 32 bits</td>
+<td><code>EAX EDX R8D R9D R10D</code></td>
+<td>32-bit integers</td>
+<td><code>uint32_t</code></td>
+</tr>
+<tr>
+<td>SSE (128-bit, we use the low 32 bits)</td>
+<td><code>XMM0</code> to <code>XMM5</code></td>
+<td>One <code>float</code> each</td>
+<td><code>float</code> variables</td>
+</tr>
+<tr>
+<td>Stack pointer</td>
+<td><code>RSP</code></td>
+<td>Address of the top of the stack</td>
+<td>Where local variables live</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>EAX</code> is just the lower half of <code>RAX</code>. Writing <code>EAX</code> clears the upper half, which is why <code>xor eax,eax</code> sets the whole of RAX to zero.</p>
+<h3 id="reading-one-line">Reading one line</h3>
+<p>NASM syntax is <code>instruction destination, source</code>. The result goes into the <strong>left</strong> operand.</p>
+<pre><code>movss xmm0,[rcx+SfxParams.attack]   ; xmm0 = params-&gt;attack
+mulss xmm0,[rate]                   ; xmm0 = xmm0 * 44100.0
+cvttss2si eax,xmm0                  ; eax  = (int) xmm0   (truncate)
+</code></pre>
+<ul>
+<li>Square brackets mean <strong>memory</strong>: <code>[rcx+24]</code> = "the 4 bytes at address RCX + 24".</li>
+<li><code>;</code> starts a comment.</li>
+<li><code>SfxParams.attack</code> is a named offset (24) from the <code>struc</code> block, so we never write magic numbers.</li>
+</ul>
+<h3 id="the-instructions-you-will-meet">The instructions you will meet</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Instruction</th>
+<th>Meaning</th>
+<th>C equivalent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mov a,b</code></td>
+<td>Copy b into a</td>
+<td><code>a = b;</code></td>
+</tr>
+<tr>
+<td><code>lea r,[addr]</code></td>
+<td>Compute an address (or do quick maths) without reading memory</td>
+<td><code>r = &amp;x;</code> or <code>r = 2*n + 44;</code></td>
+</tr>
+<tr>
+<td><code>add / sub / inc</code></td>
+<td>Integer add, subtract, add 1</td>
+<td><code>a += b; a++;</code></td>
+</tr>
+<tr>
+<td><code>xor a,a</code></td>
+<td>Fast way to set a register to 0</td>
+<td><code>a = 0;</code></td>
+</tr>
+<tr>
+<td><code>shl / shr</code></td>
+<td>Shift bits left / right</td>
+<td><code>x &lt;&lt; 13</code>, <code>x &gt;&gt; 17</code></td>
+</tr>
+<tr>
+<td><code>and</code></td>
+<td>Bitwise AND</td>
+<td><code>i &amp; 255</code></td>
+</tr>
+<tr>
+<td><code>test a,a</code></td>
+<td>Is a zero? (sets flags only)</td>
+<td><code>if (a == 0)</code></td>
+</tr>
+<tr>
+<td><code>cmp a,b</code></td>
+<td>Compare integers (sets flags only)</td>
+<td><code>if (a &lt; b)</code></td>
+</tr>
+<tr>
+<td><code>jz / je / jb / ja / jmp</code></td>
+<td>Jump if zero / equal / below / above / always</td>
+<td><code>if (...) goto</code></td>
+</tr>
+<tr>
+<td><code>call / ret</code></td>
+<td>Call a function / return from it</td>
+<td><code>f();</code> <code>return;</code></td>
+</tr>
+<tr>
+<td><code>movss</code></td>
+<td>Move one float</td>
+<td><code>float x = y;</code></td>
+</tr>
+<tr>
+<td><code>addss subss mulss divss</code></td>
+<td>Float add, subtract, multiply, divide</td>
+<td><code>+ - * /</code></td>
+</tr>
+<tr>
+<td><code>minss</code></td>
+<td>Smaller of two floats</td>
+<td><code>fminf(a,b)</code></td>
+</tr>
+<tr>
+<td><code>comiss</code></td>
+<td>Compare two floats (sets flags)</td>
+<td><code>if (x &lt; y)</code></td>
+</tr>
+<tr>
+<td><code>cvttss2si</code></td>
+<td>Float → int, <strong>truncate</strong></td>
+<td><code>(int)x</code></td>
+</tr>
+<tr>
+<td><code>cvtss2si</code></td>
+<td>Float → int, <strong>round to nearest</strong></td>
+<td><code>lrintf(x)</code></td>
+</tr>
+<tr>
+<td><code>cvtsi2ss</code></td>
+<td>Int → float</td>
+<td><code>(float)n</code></td>
+</tr>
+<tr>
+<td><code>andps</code></td>
+<td>Bitwise AND on floats (used to clear the sign bit)</td>
+<td><code>fabsf(x)</code></td>
+</tr>
+<tr>
+<td><code>xorps x,x</code></td>
+<td>Set a float register to 0.0</td>
+<td><code>x = 0.0f;</code></td>
+</tr>
+<tr>
+<td><code>packssdw</code></td>
+<td>Squash 32-bit ints into 16-bit with <strong>saturation</strong></td>
+<td>clamp to -32768..32767</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="flags-and-jumps-how-if-and-loops-work">Flags and jumps: how <code>if</code> and loops work</h3>
+<p>There is no <code>if</code> or <code>for</code> in Assembly. Instead, <code>cmp</code>/<code>test</code>/<code>comiss</code> set hidden <strong>flags</strong>, and the next jump instruction reads them.</p>
+<pre><code> inc r8d          ; n++
+ cmp r8d,[rsp+TOTAL]
+ jb .loop         ; if (n &lt; total) go back to .loop
+</code></pre>
+<p>That is a <code>for</code> loop. Labels starting with a dot (<code>.loop</code>, <code>.bad</code>) are local to the function above them.</p>
+<h3 id="functions-and-the-windows-x64-calling-convention">Functions and the Windows x64 calling convention</h3>
+<p>Windows has a fixed rule for how functions pass data, called the <strong>Microsoft x64 ABI</strong>. Python and C follow it, so our Assembly must too.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>In this program</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1st–4th arguments arrive in <code>RCX, RDX, R8, R9</code></td>
+<td><code>sfx_generate(params, out, capacity)</code> → RCX = params, RDX = out, R8D = capacity</td>
+</tr>
+<tr>
+<td>Return value goes in <code>EAX</code> / <code>RAX</code></td>
+<td>Sample count or byte count; 0 means error</td>
+</tr>
+<tr>
+<td><strong>Volatile</strong> registers may be destroyed freely</td>
+<td>RAX, RCX, RDX, R8–R11, XMM0–XMM5</td>
+</tr>
+<tr>
+<td><strong>Non-volatile</strong> registers must be restored before returning</td>
+<td>RBX, RBP, RSI, RDI, R12–R15, XMM6–XMM15</td>
+</tr>
+<tr>
+<td>Before a <code>call</code>, reserve 32 bytes of "shadow space" and keep RSP 16-byte aligned</td>
+<td><code>sub rsp,152</code> in <code>sfx_generate</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Key design choice:</strong> the engine only ever uses volatile registers, so it never has to save or restore anything. A test (<code>tests/abi_probe.asm</code>) proves the non-volatile registers come back untouched.</p>
+<h3 id="sections-where-things-live-in-the-dll">Sections: where things live in the DLL</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Contains</th>
+<th>Writable?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.text</code></td>
+<td>The code</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>.rdata</code></td>
+<td>Constants: 1.0, 44100.0, range tables, sine table, WAV header template</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>.pdata</code> / <code>.xdata</code></td>
+<td>Unwind info so Windows can walk the stack through <code>sfx_generate</code> if something crashes</td>
+<td>No</td>
+</tr>
+</tbody>
+</table></div>
+<p>Nothing is writable, so there are no global variables. All working state lives in registers or on the stack.</p>
+<h2 id="3-walkthrough-of-the-key-parts">3. Walkthrough of the key parts</h2>
+<p><code>engine/sfx.asm</code> has four routines. Three are exported to Python; one is a private helper.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Routine</th>
+<th>Lines</th>
+<th>Inputs</th>
+<th>Returns</th>
+<th>One-line job</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sfx_sample_count</code></td>
+<td>46–88</td>
+<td>RCX = params</td>
+<td>EAX = planned samples, 0 if invalid</td>
+<td>Validate the parameters and compute the length</td>
+</tr>
+<tr>
+<td><code>sfx_generate</code></td>
+<td>104–248</td>
+<td>RCX = params, RDX = output buffer, R8D = capacity</td>
+<td>EAX = samples written, 0 on error</td>
+<td>The synthesizer: produce every sample</td>
+</tr>
+<tr>
+<td><code>noise_next</code></td>
+<td>251–263</td>
+<td>R9D = random state</td>
+<td>XMM0 = random float in [-1, 1)</td>
+<td>Xorshift random number generator</td>
+</tr>
+<tr>
+<td><code>sfx_write_wav</code></td>
+<td>266–302</td>
+<td>RCX = samples, EDX = count, R8 = output, R9D = byte capacity</td>
+<td>EAX = bytes written, 0 on error</td>
+<td>Write the 44-byte WAV header + copy samples</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="31-the-parameter-struct-lines-416">3.1 The parameter struct (lines 4–16)</h3>
+<p>The 44-byte struct is the contract between Python and Assembly. Eleven 4-byte fields, no padding.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Offset</th>
+<th>Field</th>
+<th>Type</th>
+<th>Valid range</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>waveform</td>
+<td>uint32</td>
+<td>0 square, 1 sawtooth, 2 triangle, 3 noise</td>
+</tr>
+<tr>
+<td>4</td>
+<td>base_freq</td>
+<td>float</td>
+<td>20–4,000 Hz</td>
+</tr>
+<tr>
+<td>8</td>
+<td>slide</td>
+<td>float</td>
+<td>-4 to +4 octaves per second</td>
+</tr>
+<tr>
+<td>12</td>
+<td>min_freq</td>
+<td>float</td>
+<td>20–1,000 Hz, and ≤ base_freq</td>
+</tr>
+<tr>
+<td>16</td>
+<td>vib_depth</td>
+<td>float</td>
+<td>0–0.5</td>
+</tr>
+<tr>
+<td>20</td>
+<td>vib_rate</td>
+<td>float</td>
+<td>0–30 Hz</td>
+</tr>
+<tr>
+<td>24</td>
+<td>attack</td>
+<td>float</td>
+<td>0–2 s</td>
+</tr>
+<tr>
+<td>28</td>
+<td>sustain</td>
+<td>float</td>
+<td>0–2 s</td>
+</tr>
+<tr>
+<td>32</td>
+<td>decay</td>
+<td>float</td>
+<td>0–3 s</td>
+</tr>
+<tr>
+<td>36</td>
+<td>volume</td>
+<td>float</td>
+<td>0–1</td>
+</tr>
+<tr>
+<td>40</td>
+<td>seed</td>
+<td>uint32</td>
+<td>1 to 4,294,967,295 (never 0)</td>
+</tr>
+</tbody>
+</table></div>
+<p>The same layout is written three times: NASM <code>struc</code>, C <code>typedef struct</code> in <code>ref/sfx.h</code>, and Python <code>ctypes.Structure</code> in <code>gui/sfx_binding.py</code>. If they disagree, the engine reads garbage.</p>
+<h3 id="32-sfx_sample_count-validation-with-a-loop-over-a-table-lines-4688">3.2 <code>sfx_sample_count</code>: validation with a loop over a table (lines 46–88)</h3>
+<p>Instead of nine separate <code>if</code> checks, the nine float fields (offsets 4 to 36) are checked in one loop against two constant tables, <code>low</code> and <code>high</code> (lines 30–31).</p>
+<pre><code> xor r8d,r8d                 ; i = 0
+.validate:
+ movss xmm0,[rcx+r8*4+4]     ; x = field[i]   (address = params + 4 + 4*i)
+ comiss xmm0,[r9+r8*4]       ; compare x with low[i]
+ jp .bad                     ; NaN?  -&gt; invalid
+ jb .bad                     ; x &lt; low[i]  -&gt; invalid
+ comiss xmm0,[r10+r8*4]      ; compare x with high[i]
+ ja .bad                     ; x &gt; high[i] -&gt; invalid
+ inc r8d
+ cmp r8d,9
+ jb .validate                ; loop 9 times
+</code></pre>
+<ul>
+<li><strong>Why <code>jp</code>?</strong> <code>comiss</code> sets the <strong>parity flag</strong> when either value is NaN ("not a number"). Without <code>jp</code>, a NaN would slip through, because NaN is neither below nor above anything.</li>
+<li>After the loop it checks <code>min_freq ≤ base_freq</code>, then converts seconds to samples: <code>A = (int)(attack × 44100)</code> and the same for sustain and decay, using <code>cvttss2si</code> (truncate).</li>
+<li>Total must be 1 to 220,500 (5 seconds). Any failure jumps to <code>.bad</code>, which returns 0.</li>
+</ul>
+<h3 id="33-sfx_generate-setup-the-stack-frame-lines-104152">3.3 <code>sfx_generate</code> setup: the stack frame (lines 104–152)</h3>
+<p><code>sub rsp,152</code> reserves 152 bytes on the stack. Only volatile registers are allowed, and there are not enough of them, so values that stay constant during the loop are parked in stack slots.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Stack offset</th>
+<th>Name</th>
+<th>Holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0–31</td>
+<td>(shadow space)</td>
+<td>Required by the ABI before any <code>call</code></td>
+</tr>
+<tr>
+<td>32</td>
+<td>P</td>
+<td>params pointer</td>
+</tr>
+<tr>
+<td>40</td>
+<td>OUT</td>
+<td>output buffer pointer</td>
+</tr>
+<tr>
+<td>48</td>
+<td>CAP</td>
+<td>capacity</td>
+</tr>
+<tr>
+<td>52</td>
+<td>TOTAL</td>
+<td>planned sample count</td>
+</tr>
+<tr>
+<td>56</td>
+<td>A</td>
+<td>attack end, in samples</td>
+</tr>
+<tr>
+<td>60</td>
+<td>AS</td>
+<td>attack + sustain end, in samples</td>
+</tr>
+<tr>
+<td>64</td>
+<td>D</td>
+<td>decay length, in samples</td>
+</tr>
+<tr>
+<td>68</td>
+<td>STEP</td>
+<td>vibrato phase step per sample = vib_rate / 44100</td>
+</tr>
+<tr>
+<td>72</td>
+<td>MULT</td>
+<td>pitch-slide multiplier per sample</td>
+</tr>
+<tr>
+<td>76</td>
+<td>NOISE</td>
+<td>current noise value</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Why 152 and not 80?</strong> On entry RSP is 8 bytes off a 16-byte boundary (the <code>call</code> pushed the return address). 152 = 9 × 16 + 8, so after <code>sub rsp,152</code> RSP is 16-byte aligned again, as the ABI requires before our own <code>call</code>s. The extra space is spare; total stack use stays under the 256-byte budget.</p>
+<p>It first calls <code>sfx_sample_count</code> to validate (reusing the same code, so both functions agree on length), then rejects a NULL or too-small output buffer.</p>
+<p><strong>The pitch-slide trick (lines 137–145).</strong> A slide of <em>s</em> octaves per second means multiplying the frequency by 2^(s/44100) every sample. SSE has no "power" instruction, so it uses a Taylor series:</p>
+<pre><code class="language-latex">2^{x} = e^{x \ln 2} \approx 1 + y + \frac{y^{2}}{2}, \qquad y = x \ln 2, \quad x = \frac{\text{slide}}{44100}
+</code></pre>
+<p>Because |x| ≤ 4/44100 ≈ 0.00009, the next term is about 4 × 10^-14, far smaller than float precision (1.2 × 10^-7). So three multiplies and two adds are exact enough. This is computed once, before the loop.</p>
+<h3 id="34-the-per-sample-loop-lines-153240">3.4 The per-sample loop (lines 153–240)</h3>
+<p>This is the heart of the program. It runs once per sample (44,100 times for a 1-second sound). Register map, from the comment on lines 91–93:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Register</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R8D</td>
+<td>n, the sample index</td>
+</tr>
+<tr>
+<td>XMM3</td>
+<td>phase, position inside one wave cycle, 0.0 to 1.0</td>
+</tr>
+<tr>
+<td>XMM4</td>
+<td>current frequency in Hz</td>
+</tr>
+<tr>
+<td>XMM5</td>
+<td>vibrato phase, 0.0 to 1.0</td>
+</tr>
+<tr>
+<td>XMM0</td>
+<td>the sample value being built</td>
+</tr>
+<tr>
+<td>XMM1</td>
+<td>gain (envelope)</td>
+</tr>
+<tr>
+<td>R9D</td>
+<td>random-number state</td>
+</tr>
+</tbody>
+</table></div>
+<p>Each iteration does seven steps:</p>
+<ol>
+<li><strong>Slide the pitch</strong> (154–159): <code>freq = freq × MULT</code>, then <code>minss</code> caps it at 20,000 Hz so the phase step can never exceed 1. If freq drops below <code>min_freq</code> (and this is not the first sample), stop early and return n.</li>
+<li><strong>Vibrato</strong> (160–172): look up a sine value: <code>index = (int)(vib_phase × 256) AND 255</code> into a 256-entry table. <code>vib = 1 + depth × sine</code>. Advance and wrap <code>vib_phase</code>.</li>
+<li><strong>Advance the phase</strong> (173–181): <code>phase += freq × vib / 44100</code>. When it passes 1.0, subtract 1 (one full cycle done) and draw a new noise value.</li>
+<li><strong>Pick the waveform</strong> (182–210): jump to the right shape based on <code>waveform</code>.<ul>
+<li>Square: <code>phase &lt; 0.5 ? +1 : -1</code></li>
+<li>Sawtooth: <code>2 × phase - 1</code> (a ramp)</li>
+<li>Triangle: <code>1 - 4 × |phase - 0.5|</code>; the absolute value is done with <code>andps</code> and a mask that clears the sign bit</li>
+<li>Noise: the stored random value</li>
+</ul>
+</li>
+<li><strong>Envelope</strong> (211–228): attack ramps gain 0→1 (<code>n / A</code>), sustain holds 1, decay ramps 1→0 (<code>1 - (n - AS) / D</code>).</li>
+<li><strong>Quantize</strong> (229–237): <code>sample × gain × volume × 32767</code>, round to an integer with <code>cvtss2si</code>, then <code>packssdw</code> clamps it to the 16-bit range (-32768..32767) so it can never wrap around.</li>
+<li><strong>Store and loop</strong> (237–240): write 2 bytes at <code>out + n × 2</code>, <code>n++</code>, repeat while <code>n &lt; TOTAL</code>.</li>
+</ol>
+<p><strong>Why a phase accumulator?</strong> A wave shape only needs to know "how far through the current cycle am I" (0 to 1). Changing frequency only changes how fast the phase moves, so pitch slides and vibrato come out smooth with no clicks.</p>
+<p><strong>No division by zero:</strong> if A = 0, <code>n &lt; A</code> is never true, so <code>n / A</code> never runs. If D = 0, the sound ends at AS, so the decay division never runs.</p>
+<h3 id="35-noise_next-the-random-generator-lines-251263">3.5 <code>noise_next</code>: the random generator (lines 251–263)</h3>
+<p>A 32-bit <strong>xorshift</strong> generator: three shift-and-XOR steps scramble the state.</p>
+<pre><code>x ^= x &lt;&lt; 13
+x ^= x &gt;&gt; 17
+x ^= x &lt;&lt; 5
+</code></pre>
+<p>The result is treated as a signed integer, converted to float, and multiplied by 2^-31, giving a value in [-1, 1). Same seed → same sequence, so sounds are <strong>repeatable</strong>. Seed 0 is rejected because xorshift of 0 is 0 forever (silence).</p>
+<p>Noise only changes once per wave cycle, so the "pitch" of noise controls how rough it sounds (low = rumble for Explosion, high = hiss for Hit).</p>
+<h3 id="36-sfx_write_wav-building-the-file-lines-266302">3.6 <code>sfx_write_wav</code>: building the file (lines 266–302)</h3>
+<ol>
+<li>Check pointers, count (1 to 220,500) and that the buffer holds <code>44 + 2 × count</code> bytes (computed in one <code>lea r10d,[rdx*2+44]</code>).</li>
+<li>Copy the 44-byte header template from <code>.rdata</code> (lines 34–42) byte by byte.</li>
+<li>Patch the two size fields: data size at byte 40 = <code>2 × count</code>; RIFF size at byte 4 = data size + 36.</li>
+<li>Copy the samples after the header and return the total byte count.</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Header bytes</th>
+<th>Value</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0–3</td>
+<td><code>RIFF</code></td>
+<td>File type</td>
+</tr>
+<tr>
+<td>4–7</td>
+<td>36 + data size</td>
+<td>Size of the rest of the file</td>
+</tr>
+<tr>
+<td>8–15</td>
+<td><code>WAVEfmt</code></td>
+<td>Format chunk follows</td>
+</tr>
+<tr>
+<td>20–23</td>
+<td>1, 1</td>
+<td>PCM, mono</td>
+</tr>
+<tr>
+<td>24–31</td>
+<td>44100, 88200</td>
+<td>Sample rate, bytes per second</td>
+</tr>
+<tr>
+<td>32–35</td>
+<td>2, 16</td>
+<td>Bytes per sample, bits per sample</td>
+</tr>
+<tr>
+<td>36–43</td>
+<td><code>data</code> + size</td>
+<td>Sample data follows</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="37-unwind-data-lines-304313">3.7 Unwind data (lines 304–313)</h3>
+<p><code>sfx_generate</code> changes RSP and calls other routines, so Windows needs a small description of its stack frame (<code>.pdata</code> + <code>.xdata</code>) to walk the stack if an exception or debugger passes through. It says: "this function's prologue subtracts 152 from RSP". The other routines are leaf functions that never touch RSP, so they need none.</p>
+<h3 id="38-the-python-side-briefly">3.8 The Python side, briefly</h3>
+<ul>
+<li><code>sfx_binding.py</code> loads <code>build/sfx.dll</code> with <code>ctypes</code>, declares argument and return types, allocates the buffers, and turns a 0 return into a Python exception.</li>
+<li><code>app.py</code> waits 50 ms after the last slider move before regenerating ("debounce"), so dragging does not flood the engine.</li>
+<li>Playback uses <code>winsound.PlaySound</code> on a <strong>worker thread</strong>, so the window does not freeze while sound plays.</li>
+<li><code>presets.py</code> defines the 7 presets and <code>constrain()</code>, which keeps GUI values valid (min_freq ≤ base_freq, total length ≤ 5 s), so the engine never rejects normal use.</li>
+</ul>
+<h2 id="4-slide-by-slide-script">4. Slide-by-slide script</h2>
+<p>The deck is <code>presentation/SFX_Generator_Presentation_Simple.pptx</code>: 14 slides, about 12–15 minutes. The same script is in each slide's speaker notes. Say it in your own words; the <strong>must-say</strong> point is the one sentence to land on each slide.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Slide</th>
+<th>Must-say point</th>
+<th>Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Title</td>
+<td>Every audio sample is computed by our Assembly; Python only draws the buttons.</td>
+<td>0:30</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Pick a preset or move a slider</td>
+<td>7 presets + Randomize; 44.1 kHz, 16-bit mono, up to 5 s.</td>
+<td>0:45</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Three layers</td>
+<td>GUI → ctypes binding → sfx.dll. One click = count, allocate, generate, write WAV, draw/play. The C version is our answer key, not part of the app.</td>
+<td>1:30</td>
+</tr>
+<tr>
+<td>4</td>
+<td>44-byte struct</td>
+<td>Eleven 4-byte fields; Assembly reads <code>[rcx + offset]</code>; same layout in NASM, C and Python.</td>
+<td>1:00</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Three functions</td>
+<td>Args in RCX, RDX, R8, R9; result in EAX; 0 = error. We only use volatile registers, so nothing needs saving; abi_probe proves it.</td>
+<td>1:30</td>
+</tr>
+<tr>
+<td>6</td>
+<td>7 steps per sample</td>
+<td>Slide → vibrato → phase → shape → envelope → quantize → store. Key variables never leave registers.</td>
+<td>1:30</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Four waveforms</td>
+<td>All four come from one phase value 0–1; each is a one-line formula.</td>
+<td>1:00</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Six techniques</td>
+<td>NaN via parity flag; Taylor series instead of pow; 20 kHz cap; abs by bit mask; packssdw clipping; xorshift noise.</td>
+<td>2:00</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Stack frame</td>
+<td>152 bytes keeps RSP 16-byte aligned; no globals means thread-safe; DLL is 5.6 KB with zero imports.</td>
+<td>1:00</td>
+</tr>
+<tr>
+<td>10</td>
+<td>WAV header</td>
+<td>Copy the 44-byte template, patch the two size fields, copy samples.</td>
+<td>0:45</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Bit-for-bit match</td>
+<td>10,000 random sounds, max difference 0, 1.28 million checks.</td>
+<td>1:00</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Performance</td>
+<td>All under 5 ms. The first build was slower than C -O2 on saw/triangle; a tested one-line change (movss → movaps) brings it level with C (see section 5).</td>
+<td>1:00</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Limits</td>
+<td>One laptop, no listening test yet, noise slightly muffled, movaps speed-up measured in one session only.</td>
+<td>0:45</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Demo + questions</td>
+<td>Coin → Laser → Explosion → Randomize → Save WAV; point at the status bar timing.</td>
+<td>1:00</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Demo checklist (do this tonight):</strong></p>
+<ul>
+<li>[ ] Double-click <code>launch.bat</code> and confirm the window opens with no "Engine unavailable" message</li>
+<li>[ ] Check the laptop's audio output works through the projector or speakers</li>
+<li>[ ] Click each preset once so you know how they sound</li>
+<li>[ ] Save one WAV and open it in Windows Media Player</li>
+<li>[ ] Have <code>engine/sfx.asm</code> open in an editor, scrolled to line 153 (<code>.loop:</code>), in case someone asks to see code</li>
+</ul>
+<p><strong>If the demo fails:</strong> say "the presets are also saved as WAV files from our test run" and play <code>results/presets/Coin.wav</code> and <code>Explosion.wav</code> instead.</p>
+<h2 id="4b-your-presentation-script-in-plain-english">4b. Your presentation script, in plain English</h2>
+<p>This is the script to present from. It has <strong>no code in it</strong>. You never need to read anything off a slide that looks like code. When a slide shows code, point at it and say the plain-English line below. The same script is in each slide's speaker notes in the deck. Words in <em>[brackets]</em> are things to do, not to say.</p>
+<p>It runs about 13 minutes. Don't memorise it word for word. Read it aloud twice tonight, then say it in your own words.</p>
+<h3 id="slide-1-title">Slide 1 — Title</h3>
+<blockquote class="say"><p><span class="say-label">Say this:</span> "Hi everyone. Our project is a sound-effect generator for retro-style video games. Think of the coin sound in Mario, or a laser in an old arcade game. You pick a sound, adjust it with sliders, and the program builds that sound from scratch. The interesting part is that the piece that actually calculates the sound is written in Assembly. Assembly is the lowest-level programming language there is. It's basically the processor's own instructions, written out by hand. Python only handles the window and the buttons. <em>[Point at the four lines at the bottom]</em> Those are the four basic sound shapes our engine can make."</p>
+</blockquote>
+<h3 id="slide-2-what-the-app-does">Slide 2 — What the app does</h3>
+<blockquote class="say"><p><span class="say-label">Say this:</span> "This is what you see when you use it. There are seven presets, like Coin, Laser and Explosion, plus a Randomize button. Each slider changes one ingredient of the sound: how high or low it is, whether the pitch slides up or down, a little wobble, how long it lasts, and how loud it is. Every time you move something, the sound is rebuilt instantly, the picture of the wave updates, and you can play it or save it as a normal audio file. A bit of background on how digital sound works: a sound is just a long list of numbers. Each number says how far the speaker should push out at that moment. We make 44,100 of those numbers for every second of sound, which is CD quality."</p>
+</blockquote>
+<h3 id="slide-3-three-layers">Slide 3 — Three layers</h3>
+<blockquote class="say"><p><span class="say-label">Say this:</span> "This is the most important slide, so I'll go slowly. Think of a restaurant. <em>[Point left]</em> The Python window is the waiter. It takes your order from the sliders. <em>[Point middle]</em> This middle piece is the order slip. It writes your choices down in a fixed format the kitchen understands. <em>[Point right]</em> And the Assembly engine is the kitchen. It actually cooks the sound. <em>[Point at the five steps]</em> Every click goes through the same five steps: ask the engine how long the sound will be, set aside space for it, fill that space with the sound, wrap it up as an audio file, then show it and play it. We also wrote the exact same recipe a second time in C, which is a more everyday programming language. The app never uses that copy. It's our answer key. We use it to check that the Assembly gets every single number right, and to compare speed."</p>
+</blockquote>
+<h3 id="slide-4-the-shared-form">Slide 4 — The shared form</h3>
+<blockquote class="say"><p><span class="say-label">Say this:</span> "Python and Assembly don't speak the same language, so they need a shared form to fill in. <em>[Point at the row of boxes]</em> This is that form. It has eleven boxes in a fixed order: things like which wave shape, the starting pitch, how long the fade-out is, and the volume. Every box is exactly the same size, so the whole form is 44 bytes. A byte is just the basic unit of computer memory. The Assembly side doesn't know any of the names. It only knows positions. It's like saying 'look at the seventh box' instead of 'look at the fade-in time'. That's why we wrote this layout three times, once per language, and they have to match perfectly. And if anything on the form is out of range or doesn't make sense, the engine refuses to make the sound and just reports an error. It never crashes."</p>
+</blockquote>
+<h3 id="slide-5-three-jobs">Slide 5 — Three jobs</h3>
+<blockquote class="say"><p><span class="say-label">Say this:</span> "Our engine does exactly three jobs. <em>[Point at each box in turn]</em> One: tell me how long this sound will be. Two: actually make the sound. Three: turn it into a proper audio file. Windows has strict rules about how programs pass information to each other: where each piece of information goes, and where the answer comes back. We follow those rules exactly. <em>[Point at the bottom]</em> The bottom part is about good manners. The processor has a small number of super-fast storage slots. Windows says some of them are yours to scribble on, and some you have to hand back exactly as you found them. Our engine only ever uses the ones it's allowed to scribble on, so it never has to back anything up. We also wrote a separate test that checks we really do leave the others untouched."</p>
+</blockquote>
+<h3 id="slide-6-the-main-loop">Slide 6 — The main loop</h3>
+<blockquote class="say"><p><span class="say-label">Say this:</span> "This is the heart of the program. The engine runs one loop, and every lap of the loop produces one of those numbers we talked about. So it runs 44,100 times for every second of sound. <em>[Run your hand along the seven steps]</em> On each lap it does seven small jobs. One: nudge the pitch up or down a tiny bit if the sound is meant to slide. If it slides too low, the sound just ends early. Two: add a small wobble to the pitch, called vibrato. Three: move forward through the wave. Four: work out the shape: square, sawtooth, triangle or noise. Five: apply the volume fade, meaning fade in, hold, fade out. Six: convert it into the number format audio files use. Seven: save it and go round again. The important values stay inside the processor the whole time instead of going back and forth to memory, and that's why it's fast."</p>
+</blockquote>
+<h3 id="slide-7-four-wave-shapes">Slide 7 — Four wave shapes</h3>
+<blockquote class="say"><p><span class="say-label">Say this:</span> "So how do we get four different shapes? We keep track of one number called the phase. The easiest way to picture it is a clock hand. It starts at the top, goes round, and after one full lap it's back at the start. Every wave shape is just a simple rule for turning the clock position into a height. <em>[Point at each drawing]</em> Square: high for the first half of the lap, low for the second half. Sawtooth: a steady ramp up, then a drop. Triangle: up, then back down. Noise: a random height that changes once every lap. The nice thing is that changing the pitch only changes how fast the clock hand moves, so pitch slides and wobbles stay smooth."</p>
+</blockquote>
+<h3 id="slide-8-six-problems-we-had-to-solve-ourselves">Slide 8 — Six problems we had to solve ourselves</h3>
+<blockquote class="say"><p><span class="say-label">Say this:</span> "These are six problems that a normal programming language solves for you behind the scenes. In Assembly, we had to solve them ourselves. <em>[Point at each box as you go]</em> One, bad input. If someone sends a value that isn't even a real number, comparisons behave strangely, so we added an extra check that catches it. Two, no power button. The processor has no built-in way to do 'two to the power of something', which pitch slides need, so we used a short maths shortcut. It's accurate because each step is tiny. Three, the clock hand. We cap the pitch at 20,000 vibrations a second, so the hand can never skip more than one lap at a time. Four, making numbers positive. There's no built-in way to do that for decimals, so we use a trick that switches off the minus sign directly. Five, too loud. If a value goes over the maximum, we clip it at the maximum instead of letting it wrap round to a big negative number, which would make a nasty click. Six, random but repeatable. Our noise uses a tiny random-number recipe, so the same starting number always gives exactly the same sound. That's what lets us test it."</p>
+</blockquote>
+<h3 id="slide-9-where-the-data-lives">Slide 9 — Where the data lives</h3>
+<blockquote class="say"><p><span class="say-label">Say this:</span> "Where does the engine keep its working data while it runs? Only two places. One is the processor's own storage slots. The other is one small scratch area, 152 bytes, that it borrows while it works and gives back when it's done. Think of a sticky note you throw away afterwards. <em>[Point at the diagram]</em> Windows is fussy about the size and position of that scratch area, and 152 is the number that fits its rules. Because the engine doesn't keep anything permanently, lots of parts of a program can use it at the same time without getting in each other's way. We tested a hundred at once. The whole engine file is tiny, about 5.6 kilobytes, and it doesn't depend on anything else."</p>
+</blockquote>
+<h3 id="slide-10-making-the-audio-file">Slide 10 — Making the audio file</h3>
+<blockquote class="say"><p><span class="say-label">Say this:</span> "The last job is turning all those numbers into a real audio file, a WAV file, the kind any media player can open. A WAV file starts with a short label that tells the player things like 'this is CD quality, one channel'. <em>[Point at the strip]</em> That label is the same every time except for two numbers, highlighted here, which say how big the file is. So the engine copies a ready-made label, fills in those two numbers, puts the sound right after it, and that's a finished file. Python then plays it or saves it."</p>
+</blockquote>
+<h3 id="slide-11-how-we-know-its-right">Slide 11 — How we know it's right</h3>
+<blockquote class="say"><p><span class="say-label">Say this:</span> "So how do we know it actually works? Remember the answer-key copy written in C. We made 10,000 random sounds plus 20 hand-picked ones, including every preset, and compared every single number from our Assembly with the answer key. That's about 1.28 million checks. Our requirement allowed a tiny difference of one; we got zero differences. We also tried to break it. We fed it bad values, checked it never writes outside the space it was given, checked the audio file label one byte at a time, and checked that a tone meant to be 441 vibrations a second really is."</p>
+</blockquote>
+<h3 id="slide-12-speed">Slide 12 — Speed</h3>
+<blockquote class="say"><p><span class="say-label">Say this:</span> "Now speed. We timed how long it takes to make one second of sound, did that a thousand times, and took the middle result. <em>[Point at the chart]</em> Our goal was under 5 milliseconds, which is five thousandths of a second. Every shape beats that easily. Here's the interesting part. <em>[Point at the red bars]</em> Our first version was noticeably slower than the C version on two of the shapes, sawtooth and triangle. We dug into why, and it came down to one single line of code. That line copied a number in a way that made the processor wait for the previous sample to completely finish before it could start the next one. It's like a queue where nobody can move until the person in front is done. We swapped that line for a different copying instruction that doesn't cause the wait. <em>[Point at the green bars]</em> Those two shapes got about four and a half times faster, roughly the same speed as C, and all 1.28 million correctness checks still passed."</p>
+</blockquote>
+<h3 id="slide-13-what-we-havent-proven-yet">Slide 13 — What we haven't proven yet</h3>
+<blockquote class="say"><p><span class="say-label">Say this:</span> "We also want to be upfront about what we haven't proven yet. All our timings come from one laptop. We haven't done a proper listening test with other people, so we're not claiming the presets sound perfect to everyone. The noise sound is a little muffled, which was a trade-off we chose to keep things simple. And the speed-up from that one-line change was measured in one session, so we'd want to repeat it on another computer. <em>[Point right]</em> These are our next steps."</p>
+</blockquote>
+<h3 id="slide-14-demo-and-questions">Slide 14 — Demo and questions</h3>
+<blockquote class="say"><p><span class="say-label">Say and do:</span> "Let me show you it working." <em>[Click Coin]</em> "That's a short beep that slides up in pitch, like picking up a coin." <em>[Click Laser]</em> "This one slides down fast, which gives you the laser sound." <em>[Click Explosion]</em> "This is noise that drops in pitch with a long fade-out." <em>[Press Randomize twice]</em> "Randomize sets every slider to something random, and the sound is rebuilt instantly." <em>[Click Save WAV]</em> "And this saves it as a normal audio file. <em>[Point at the bar at the bottom]</em> Down here it shows how long the sound is and how many milliseconds our engine took to make it. Thank you. We're happy to take questions."</p>
+</blockquote>
+<h3 id="if-they-ask-you-questions">If they ask you questions</h3>
+<p>If a question is about one specific line of code, it's fine to say: <strong>"That part was written by [teammate]; I'll let them take it."</strong> Agree beforehand who takes code-level questions. For everything else, these answers need no code:</p>
+<ul>
+<li><strong>Why write it in Assembly at all?</strong> "The whole point of the course is understanding what the processor really does. Writing the sound engine by hand forced us to handle everything ourselves: memory, maths, rounding, the lot."</li>
+<li><strong>Why is the window in Python, not Assembly?</strong> "Drawing windows and buttons in Assembly would be thousands of lines and wouldn't teach us anything about sound. So we kept Assembly for the part that matters: calculating the sound."</li>
+<li><strong>Why was it slower than C?</strong> "One line of code made the processor wait for each sample to finish before starting the next, like a queue. We changed that line, tested it, and it's now about the same speed as C."</li>
+<li><strong>How do you know it's correct?</strong> "We wrote the same recipe in C as an answer key and compared 1.28 million numbers. There were zero differences."</li>
+<li><strong>What happens with bad input?</strong> "The engine checks every value first. If anything is out of range or isn't a real number, it refuses and reports an error instead of crashing."</li>
+<li><strong>Is the length of the sound fixed?</strong> "No. It's the fade-in, hold and fade-out sliders added together, up to 5 seconds. If the pitch slides below the minimum, the sound stops early."</li>
+<li><strong>What was the hardest part?</strong> "Matching the answer key exactly, down to the last number. Even tiny differences in rounding would show up, so we had to do the maths in exactly the same order."</li>
+<li><strong>What would you do next?</strong> "Test it on more computers, do a proper listening test with other people, and make the noise sound a bit less muffled."</li>
+<li><strong>Anything you can't answer:</strong> "Good question. I don't want to guess, so I'll check the code and get back to you." Saying this calmly is completely fine.</li>
+</ul>
+<h2 id="5-likely-questions-and-strong-answers">5. Likely questions and strong answers</h2>
+<p>The pattern for every answer: <strong>give the direct answer in one sentence, then one reason, then point to evidence</strong> (a line number, a test or a result file). If you don't know, say "we didn't measure that; here's how we would" rather than guessing.</p>
+<h3 id="the-tough-one-why-is-your-assembly-slower-than-c">The tough one: "Why is your Assembly slower than C?"</h3>
+<p><strong>Short answer:</strong> "On square and noise we're within about 15% of optimised C. On sawtooth and triangle we were about 5× slower, and we traced it to a single instruction."</p>
+<p><strong>What's going on.</strong> Line 161 is <code>movss xmm0,xmm5</code>. When <code>movss</code> copies register to register, it only replaces the low 32 bits of XMM0 and <strong>keeps the other 96 bits</strong>. So the CPU has to wait for XMM0's old value, which is the previous sample's final result. For sawtooth and triangle that result depends on the phase, so every sample has to wait for the previous sample to completely finish. The CPU can't overlap loop iterations. Square and noise don't depend on the phase in the same way, which is why they're fast.</p>
+<p><strong>The proof (tested 27 Oct, on a scratch copy; your repo is unchanged):</strong> changing that one line to <code>movaps xmm0,xmm5</code>, which copies all 128 bits, gave these results. All 1,279,144 checks still pass, with max difference 0.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Waveform</th>
+<th>Original Asm (ms)</th>
+<th>One-line fix (ms)</th>
+<th>C -O2 (ms)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Square</td>
+<td>0.35</td>
+<td>0.26</td>
+<td>0.30</td>
+</tr>
+<tr>
+<td>Sawtooth</td>
+<td>1.58</td>
+<td>0.35</td>
+<td>0.29</td>
+</tr>
+<tr>
+<td>Triangle</td>
+<td>1.67</td>
+<td>0.40</td>
+<td>0.38</td>
+</tr>
+<tr>
+<td>Noise</td>
+<td>0.32</td>
+<td>0.24</td>
+<td>0.25</td>
+</tr>
+</tbody>
+</table></div>
+<p>This is a strong answer because it shows real architecture understanding: <strong>false dependencies from partial register writes</strong>. The deck now says the fix was <em>tested</em>, which is true. If someone asks whether it is in the submitted code, be straight: it was tested on a copy. To say it is in the final code, commit the change to <code>engine/sfx.asm</code>, run <code>build.bat</code>, then rerun <code>tools/run_checks.py</code>.</p>
+<p><strong>Other reasons C -O2 is still competitive:</strong> the compiler schedules instructions to keep the CPU's execution units busy, and it can keep more values in registers. We prioritised readability and a bit-exact match with the reference.</p>
+<h3 id="design-questions">Design questions</h3>
+<p><strong>Why write the engine in Assembly and the GUI in Python?</strong> The course is about computer architecture, so the part that does real computation is in Assembly. Writing a GUI in Assembly would be thousands of lines of Windows API calls and teach nothing about the CPU. Python's <code>ctypes</code> can call a DLL directly with no glue code.</p>
+<p><strong>Why a DLL and not an .exe?</strong> A DLL is a library other programs load. Python loads it with <code>ctypes.CDLL</code>. It also lets the C test harness and the benchmark load the exact same file.</p>
+<p><strong>Why NASM?</strong> It's free, uses the readable Intel syntax, and outputs Windows x64 object files that MinGW's <code>gcc</code> can link into a DLL.</p>
+<p><strong>Why <code>float</code> and not <code>double</code>?</strong> The output is 16-bit audio. A float has 24 bits of precision, which is already more than 16, so double would add nothing you can hear. Single-precision SSE instructions (<code>...ss</code>) are also what the C reference uses, so they match bit for bit.</p>
+<p><strong>Why does Python call <code>sfx_sample_count</code> first?</strong> The engine never allocates memory (no heap). So the caller has to ask "how big will it be?", allocate a buffer, and pass it in. That's the same pattern many Windows APIs use.</p>
+<p><strong>Why can <code>sfx_generate</code> return fewer samples than <code>sfx_sample_count</code>?</strong> With a downward pitch slide, the sound ends early when the pitch drops below <code>min_freq</code> (line 158–159). Python always uses the returned count for the WAV and the drawing.</p>
+<h3 id="assembly-questions">Assembly questions</h3>
+<p><strong>Walk me through the main loop.</strong> Use slide 6: slide pitch, vibrato, advance phase, pick waveform, envelope, quantize, store, <code>inc r8d</code>, <code>cmp r8d,[rsp+TOTAL]</code>, <code>jb .loop</code>.</p>
+<p><strong>What are RCX, RDX, R8 here?</strong> The first three arguments. Windows x64 passes arguments 1–4 in RCX, RDX, R8, R9. For <code>sfx_generate</code>: params pointer, output buffer, capacity.</p>
+<p><strong>Why <code>sub rsp,152</code>?</strong> It reserves stack space for 32 bytes of shadow space (required before any <code>call</code>) and 12 local values. 152 makes RSP a multiple of 16 again, because the <code>call</code> into us pushed 8 bytes. Windows requires 16-byte alignment at every <code>call</code>.</p>
+<p><strong>Why do you store things on the stack instead of in registers?</strong> We only use volatile registers (so nothing needs saving), and there are only six volatile XMM registers. Values that don't change in the loop, like A, D, MULT, go in stack slots. Those are in the L1 cache, so reading them costs about as much as a register.</p>
+<p><strong>What's the difference between volatile and non-volatile registers?</strong> Volatile (RAX, RCX, RDX, R8–R11, XMM0–XMM5) can be destroyed by any function. Non-volatile (RBX, RBP, RSI, RDI, R12–R15, XMM6–XMM15) must have the same value when you return. If we clobbered XMM6, Python would crash in a confusing way later.</p>
+<p><strong>How do you prove you don't corrupt registers?</strong> <code>tests/abi_probe.asm</code> fills every non-volatile register with a known pattern, calls our function, then checks that every one is unchanged. It runs on success paths and error paths.</p>
+<p><strong>What is <code>jp</code> doing after <code>comiss</code>?</strong> It catches NaN. Comparing anything with NaN is "unordered", which sets the parity flag. Without <code>jp</code>, NaN would pass the range check, because NaN is neither below nor above any number.</p>
+<p><strong>What's the difference between <code>cvttss2si</code> and <code>cvtss2si</code>?</strong> The extra <code>t</code> means <strong>truncate</strong> (chop off the decimals). We truncate when converting seconds to sample counts so every implementation agrees exactly. We <strong>round to nearest</strong> when converting the final sample value, which is more accurate audio.</p>
+<p><strong>Why <code>packssdw</code>?</strong> It packs 32-bit integers into 16-bit with <strong>signed saturation</strong>: anything above 32767 becomes 32767 and anything below -32768 becomes -32768. Without it, a value like 32768 would wrap around to -32768, which sounds like a loud click.</p>
+<p><strong>How does <code>andps</code> compute an absolute value?</strong> A float's top bit is its sign. ANDing with <code>0x7FFFFFFF</code> clears that bit, so -0.3 becomes 0.3. One instruction, no branch.</p>
+<p><strong>Explain the Taylor series.</strong> A slide of <em>s</em> octaves per second means multiplying the frequency by 2^(s/44100) each sample. SSE has no power instruction. For a tiny x, 2^x ≈ 1 + y + y²/2 with y = x · ln 2. Since x is at most 0.00009, the first ignored term is about 10^-14, much smaller than float precision.</p>
+<p><strong>Why cap frequency at 20,000 Hz?</strong> Without a cap, a long upward slide would make the phase step bigger than 1. Then one <code>subss</code> wouldn't wrap the phase back into 0–1 and the waveform would break. 20 kHz is also the top of human hearing.</p>
+<p><strong>What's <code>default rel</code>?</strong> It makes memory references like <code>[rate]</code> relative to the current instruction (RIP-relative). Windows can load a DLL at any address, and RIP-relative addressing still works wherever it lands.</p>
+<p><strong>What are <code>.pdata</code> and <code>.xdata</code>?</strong> Unwind information. If an exception or a debugger needs to walk the call stack while inside <code>sfx_generate</code>, Windows reads these to know we subtracted 152 from RSP. Leaf functions that never touch RSP don't need them.</p>
+<p><strong>Could you divide by zero in the envelope?</strong> No. The attack division <code>n / A</code> only runs when <code>n &lt; A</code>, which is impossible if A = 0. The decay division only runs after <code>A + S</code>, and if D = 0 the sound ends exactly there.</p>
+<p><strong>What happens with seed 0?</strong> Xorshift of 0 is 0 forever, so noise would be silence. The engine rejects seed 0 (line 52–53) and the GUI never sends it.</p>
+<p><strong>Why not use SIMD to do 4 samples at once?</strong> Each sample depends on the previous one: frequency is multiplied each step, and phase is accumulated. Running 4 in parallel would need a different formula, which would no longer match the C reference bit for bit.</p>
+<h3 id="correctness-and-testing">Correctness and testing</h3>
+<p><strong>How do you know the output is right?</strong> We wrote the same algorithm in C, independently, and compared every sample of 10,000 random sounds plus 20 fixed cases. The maximum difference was 0. We also check physical facts: a 441 Hz square wave has 441 cycles per second, and a pitch slide of +1 octave per second reaches 880 Hz after 1 second (±1%).</p>
+<p><strong>Couldn't the C and Assembly share the same bug?</strong> Yes, if both follow a wrong spec. That's why we also have the physics checks (cycle counts, slide timing, full-scale ±32767), and the WAV header check against hand-written expected bytes.</p>
+<p><strong>How do you know you never write past the buffer?</strong> Tests surround the buffer with 64 guard bytes of <code>0xCD</code> and check they're untouched, with capacity one less, equal and one more than needed.</p>
+<p><strong>Is it thread-safe?</strong> Yes. No global variables are ever written; all state is in registers or on the caller's stack. The Python test runs 100 concurrent calls.</p>
+<h3 id="honest-limits-questions">Honest-limits questions</h3>
+<p><strong>Do the presets actually sound like coins and explosions?</strong> "We haven't run the group listening test yet, so we don't claim that. It's on our next-steps list."</p>
+<p><strong>Why does noise sound a bit muffled?</strong> The noise value only changes once per wave cycle, and the max base frequency is 4 kHz. That limits how bright it gets. It was a known trade-off in our requirements (G-11).</p>
+<p><strong>Were benchmarks fair?</strong> One laptop (Ryzen 9 8940HX), 100 warm-ups and 1,000 measured runs, median reported. We didn't control background apps or AC power, and we say so in the README.</p>
+<p><strong>Why copy the WAV byte by byte?</strong> Simplicity. At most 441 KB, it takes well under a millisecond and runs once per sound, not in the hot loop. <code>rep movsb</code> would be the faster option.</p>
+<h2 id="6-glossary-and-last-minute-cheat-sheet">6. Glossary and last-minute cheat sheet</h2>
+<h3 id="numbers-to-remember">Numbers to remember</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Number</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>44,100</td>
+<td>Samples per second (sample rate)</td>
+</tr>
+<tr>
+<td>16-bit, mono</td>
+<td>Each sample is one signed 16-bit integer, -32768 to 32767</td>
+</tr>
+<tr>
+<td>220,500</td>
+<td>Max samples = 5 seconds</td>
+</tr>
+<tr>
+<td>44</td>
+<td>Bytes in the parameter struct, and also bytes in the WAV header</td>
+</tr>
+<tr>
+<td>152</td>
+<td>Bytes of stack <code>sfx_generate</code> reserves (budget 256)</td>
+</tr>
+<tr>
+<td>20,000 Hz</td>
+<td>Frequency cap so the phase step stays below 1</td>
+</tr>
+<tr>
+<td>256</td>
+<td>Entries in the vibrato sine table</td>
+</tr>
+<tr>
+<td>1,279,144</td>
+<td>Native test checks passed</td>
+</tr>
+<tr>
+<td>0</td>
+<td>Max sample difference between Assembly and C</td>
+</tr>
+<tr>
+<td>0.33–1.68 ms</td>
+<td>Assembly median time for 1 s of sound (target 5 ms)</td>
+</tr>
+<tr>
+<td>5,632 bytes</td>
+<td>Size of <code>sfx.dll</code>; zero imports</td>
+</tr>
+<tr>
+<td>80.8 ms</td>
+<td>Median slider-to-redraw time in the off-screen GUI test (target 100 ms)</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="glossary">Glossary</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Plain meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sample</td>
+<td>One number describing the speaker position at one instant</td>
+</tr>
+<tr>
+<td>Sample rate</td>
+<td>How many samples per second (44,100 here)</td>
+</tr>
+<tr>
+<td>Phase</td>
+<td>How far through one wave cycle, 0.0 to 1.0</td>
+</tr>
+<tr>
+<td>Frequency / pitch</td>
+<td>Cycles per second (Hz); higher = higher note</td>
+</tr>
+<tr>
+<td>Octave</td>
+<td>Doubling of frequency</td>
+</tr>
+<tr>
+<td>Pitch slide</td>
+<td>Frequency changes smoothly over time (laser = down, coin = up)</td>
+</tr>
+<tr>
+<td>Vibrato</td>
+<td>Pitch wobbles up and down a little, periodically</td>
+</tr>
+<tr>
+<td>Envelope (ASD)</td>
+<td>Volume shape: Attack (fade in), Sustain (hold), Decay (fade out)</td>
+</tr>
+<tr>
+<td>Quantize</td>
+<td>Turn a float into the nearest 16-bit integer</td>
+</tr>
+<tr>
+<td>Saturation</td>
+<td>Clamp to the min/max instead of wrapping around</td>
+</tr>
+<tr>
+<td>PCM</td>
+<td>Plain list of sample numbers, no compression</td>
+</tr>
+<tr>
+<td>WAV / RIFF</td>
+<td>Windows audio file: 44-byte header + PCM samples</td>
+</tr>
+<tr>
+<td>Register</td>
+<td>Tiny, very fast storage slot inside the CPU</td>
+</tr>
+<tr>
+<td>SSE / XMM</td>
+<td>The CPU's floating-point instruction set and its 128-bit registers</td>
+</tr>
+<tr>
+<td>ABI / calling convention</td>
+<td>Rules for how functions pass arguments and which registers they may destroy</td>
+</tr>
+<tr>
+<td>Volatile / non-volatile</td>
+<td>Registers a function may destroy / must restore</td>
+</tr>
+<tr>
+<td>Shadow space</td>
+<td>32 bytes the caller must reserve on the stack before any <code>call</code> on Windows x64</td>
+</tr>
+<tr>
+<td>Stack frame</td>
+<td>The block of stack a function reserves for its own local values</td>
+</tr>
+<tr>
+<td>Leaf function</td>
+<td>A function that calls no other function</td>
+</tr>
+<tr>
+<td>Reentrant</td>
+<td>Safe to run several times at once because it keeps no shared state</td>
+</tr>
+<tr>
+<td>DLL</td>
+<td>A library of functions other programs load at run time</td>
+</tr>
+<tr>
+<td>ctypes</td>
+<td>Python's built-in module for calling C-style DLL functions</td>
+</tr>
+<tr>
+<td>Xorshift</td>
+<td>A tiny, fast pseudo-random number generator using shifts and XOR</td>
+</tr>
+<tr>
+<td>NaN</td>
+<td>"Not a number", e.g. 0/0; compares as unordered</td>
+</tr>
+<tr>
+<td>Taylor series</td>
+<td>Approximating a function with a short polynomial</td>
+</tr>
+<tr>
+<td>False dependency</td>
+<td>CPU waits for an old register value it doesn't really need</td>
+</tr>
+<tr>
+<td>Test oracle</td>
+<td>A trusted second implementation to compare results against (our C code)</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="if-you-freeze-fall-back-on-these-three-sentences">If you freeze, fall back on these three sentences</h3>
+<ol>
+<li>"Python is only the interface. Every sample is calculated in our Assembly DLL, inside one loop that runs 44,100 times per second of sound."</li>
+<li>"We proved it's correct by comparing it to a separate C version on 10,000 random sounds: zero difference."</li>
+<li>"It follows the Windows x64 calling rules, uses only volatile registers, and keeps no global state, so it's safe to call from Python and from multiple threads."</li>
+</ol>
+    <p class="footer-note">Deck: presentation/SFX_Generator_Presentation_Simple.pptx · Editable version of this guide lives in Claude Docs.</p>
+  </main>
+</div>
+
+<script>
+(() => {
+  const links = [...document.querySelectorAll('.rail a')];
+  const byId = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
+  const heads = [...document.querySelectorAll('main h2[id], main h3[id]')].filter(h => byId.has(h.id));
+  if (!('IntersectionObserver' in window) || !heads.length) return;
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      links.forEach(a => a.classList.remove('active'));
+      byId.get(e.target.id)?.classList.add('active');
+    });
+  }, { rootMargin: '0px 0px -75% 0px' });
+  heads.forEach(h => io.observe(h));
+})();
+</script>
